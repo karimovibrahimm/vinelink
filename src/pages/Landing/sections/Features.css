@@ -1,0 +1,111 @@
+.features {
+  padding: 120px 24px;
+  background-color: var(--color-white);
+}
+
+.features__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.features__header {
+  text-align: center;
+  margin-bottom: 72px;
+}
+
+.features__badge {
+  display: inline-block;
+  background-color: #e8f0eb;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.features__title {
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  letter-spacing: -1.5px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+
+.features__subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-light);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.features__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.features__card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-dark);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  transition: var(--transition);
+  cursor: default;
+}
+
+.features__card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: #c8dcd0;
+}
+
+.features__card-icon {
+  width: 52px;
+  height: 52px;
+  background-color: #e8f0eb;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+
+.features__card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 12px;
+}
+
+.features__card-description {
+  font-size: var(--font-size-md);
+  color: var(--color-text-light);
+  line-height: 1.7;
+}
+
+@media (max-width: 968px) {
+  .features__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .features__title {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+@media (max-width: 580px) {
+  .features__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .features__title {
+    font-size: var(--font-size-2xl);
+    letter-spacing: -1px;
+  }
+}
