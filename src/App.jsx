@@ -7,9 +7,43 @@ import ForgotPassword from './pages/Auth/ForgotPassword'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Appearance from './pages/Dashboard/Appearance'
 import Analytics from './pages/Dashboard/Analytics'
-import Settings from './pages/Dashboard/Settings'
 import Profile from './pages/Profile/Profile'
+import Onboarding from './pages/Onboarding/Onboarding'
+import { useEffect, useState } from 'react'
+import { supabase } from './lib/supabase'
 import './App.css'
+
+function OnboardingWrapper() {
+  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const get = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/login'; return }
+      setUser(user)
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      setProfile(data)
+      setLoading(false)
+    }
+    get()
+  }, [])
+
+  if (loading) return (
+    <div className="dashboard__loading">
+      <div className="dashboard__spinner"></div>
+    </div>
+  )
+
+  return (
+    <Onboarding
+      user={user}
+      profile={profile}
+      onComplete={() => window.location.href = '/dashboard'}
+    />
+  )
+}
 
 function App() {
   return (
@@ -20,10 +54,10 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/onboarding" element={<OnboardingWrapper />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/appearance" element={<Appearance />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
-          <Route path="/dashboard/settings" element={<Settings />} />
           <Route path="/:username" element={<Profile />} />
         </Routes>
       </div>
@@ -31,4 +65,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

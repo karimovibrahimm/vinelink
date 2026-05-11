@@ -108,6 +108,16 @@ function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { window.location.href = '/login'; return }
     setUser(user)
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('onboarding_done')
+      .eq('id', user.id)
+      .single()
+
+    if (prof && !prof.onboarding_done) {
+      window.location.href = '/onboarding'
+      return
+    }
     await getProfile(user.id)
     await getLinks(user.id)
     setLoading(false)
