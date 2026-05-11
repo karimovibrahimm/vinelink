@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import './Onboarding.css'
+import { GoogleGenAI } from "@google/genai";
 
 function Onboarding({ user, profile, onComplete }) {
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
   const [step, setStep] = useState(1)
   const [socialInput, setSocialInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -10,48 +12,78 @@ function Onboarding({ user, profile, onComplete }) {
   const [error, setError] = useState('')
 
   const handleGenerate = async () => {
-    if (!socialInput.trim()) return
-    setLoading(true)
-    setError('')
+  if (!socialInput.trim()) return
 
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+  setLoading(true)
+  setError('')
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [
+          contents: [
             {
-              role: 'user',
-              content: `You are helping set up a link-in-bio page. Based on this social media info: "${socialInput}", generate a profile for them.
+              parts: [
+                {
+                  text: `
+                    You are helping set up a link-in-bio page.
 
-Respond ONLY with a valid JSON object, no markdown, no explanation:
-{
-  "full_name": "their name or username cleaned up",
-  "bio": "a punchy 1-2 sentence bio under 100 chars that fits their niche",
-  "theme": "one of: default, ocean, rose, midnight, sand, slate — pick based on their vibe",
-  "links": [
-    { "title": "link title", "url": "the actual url they pasted or inferred" }
-  ]
-}`
+                    Based on this social media info:
+                    "${socialInput}"
+
+                    Generate a profile for them.
+
+                    Respond ONLY with valid JSON.
+                    No markdown.
+                    No explanation.
+
+                    {
+                    "full_name": "their name or username cleaned up",
+                    "bio": "a punchy 1-2 sentence bio under 100 chars that fits their niche",
+                    "theme": "one of: default, ocean, rose, midnight, sand, slate",
+                    "links": [
+                        {
+                        "title": "link title",
+                        "url": "the actual url they pasted or inferred"
+                        }
+                    ]
+                    }
+                                    `
+                }
+              ]
             }
-          ]
+          ],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 1000
+          }
         })
-      })
+      }
+    )
 
-      const data = await response.json()
-      const text = data.content[0].text
-      const clean = text.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean)
-      setResult(parsed)
-      setStep(2)
-    } catch (e) {
-      setError('Something went wrong. Try again.')
-    }
+    const data = await response.json()
 
-    setLoading(false)
+    const text =
+      data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    const clean = text.replace(/```json|```/g, '').trim()
+
+    const parsed = JSON.parse(clean)
+
+    setResult(parsed)
+    setStep(2)
+  } catch (e) {
+    console.error(e)
+    setError('Something went wrong. Try again.')
   }
+
+  setLoading(false)
+}
 
   const handleApply = async () => {
     setLoading(true)
