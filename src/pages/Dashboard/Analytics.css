@@ -292,3 +292,12 @@
     height: 140px;
   }
 }
+
+.analytics__no-data {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  background: var(--color-background);
+  border-radius: var(--radius-md);
+}

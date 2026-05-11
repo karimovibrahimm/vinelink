@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import './Appearance.css'
 
@@ -18,15 +18,13 @@ function Appearance() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [form, setForm] = useState({
-    full_name: '',
-    bio: '',
-    theme: 'default'
-  })
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [form, setForm] = useState({ full_name: '', bio: '', theme: 'default' })
+  const fileInputRef = useRef(null)
 
-  useEffect(() => {
-    getUser()
-  }, [])
+  useEffect(() => { getUser() }, [])
 
   const getUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -45,6 +43,7 @@ function Appearance() {
       .single()
     if (data) {
       setProfile(data)
+      setAvatarUrl(data.avatar_url || null)
       setForm({
         full_name: data.full_name || '',
         bio: data.bio || '',
@@ -61,6 +60,50 @@ function Appearance() {
       .eq('active', true)
       .order('position', { ascending: true })
     if (data) setLinks(data)
+  }
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be under 2MB')
+      return
+    }
+
+    // Show preview immediately
+    const reader = new FileReader()
+    reader.onload = (e) => setAvatarPreview(e.target.result)
+    reader.readAsDataURL(file)
+
+    setUploadingAvatar(true)
+
+    const fileExt = file.name.split('.').pop()
+    const filePath = `${user.id}/avatar.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true })
+
+    if (uploadError) {
+      alert('Upload failed: ' + uploadError.message)
+      setUploadingAvatar(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath)
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', user.id)
+
+    if (!updateError) {
+      setAvatarUrl(publicUrl)
+    }
+
+    setUploadingAvatar(false)
   }
 
   const handleSave = async () => {
@@ -87,6 +130,7 @@ function Appearance() {
   }
 
   const activeTheme = themes.find(t => t.id === form.theme) || themes[0]
+  const displayAvatar = avatarPreview || avatarUrl
 
   if (loading) {
     return (
@@ -170,20 +214,51 @@ function Appearance() {
             <h1 className="dashboard__title">Appearance</h1>
             <p className="dashboard__subtitle">Customize how your Vinelink page looks</p>
           </div>
-          <button
-            className="dashboard__add-btn"
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <button className="dashboard__add-btn" onClick={handleSave} disabled={saving}>
             {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save changes'}
           </button>
+        </div>
+
+        {/* Avatar Upload */}
+        <div className="appearance__section">
+          <h2 className="appearance__section-title">Profile Photo</h2>
+          <div className="appearance__avatar-row">
+            <div className="appearance__avatar-preview">
+              {displayAvatar ? (
+                <img src={displayAvatar} alt="avatar" />
+              ) : (
+                <span>{profile?.username?.[0]?.toUpperCase()}</span>
+              )}
+              {uploadingAvatar && (
+                <div className="appearance__avatar-overlay">
+                  <div className="dashboard__spinner"></div>
+                </div>
+              )}
+            </div>
+            <div className="appearance__avatar-actions">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+              <button
+                className="appearance__upload-btn"
+                onClick={() => fileInputRef.current.click()}
+                disabled={uploadingAvatar}
+              >
+                {uploadingAvatar ? 'Uploading...' : 'Upload photo'}
+              </button>
+              <p className="appearance__hint">JPG, PNG or GIF. Max 2MB.</p>
+            </div>
+          </div>
         </div>
 
         {/* Profile Info */}
         <div className="appearance__section">
           <h2 className="appearance__section-title">Profile Info</h2>
           <div className="appearance__fields">
-
             <div className="appearance__field">
               <label className="appearance__label">Display Name</label>
               <input
@@ -195,7 +270,6 @@ function Appearance() {
               />
               <span className="appearance__hint">This appears at the top of your page</span>
             </div>
-
             <div className="appearance__field">
               <label className="appearance__label">Bio</label>
               <textarea
@@ -207,7 +281,6 @@ function Appearance() {
               />
               <span className="appearance__hint">{form.bio.length}/160 characters</span>
             </div>
-
           </div>
         </div>
 
@@ -237,11 +310,7 @@ function Appearance() {
           </div>
         </div>
 
-        <button
-          className="appearance__save-btn"
-          onClick={handleSave}
-          disabled={saving}
-        >
+        <button className="appearance__save-btn" onClick={handleSave} disabled={saving}>
           {saved ? '✓ Changes saved!' : saving ? 'Saving...' : 'Save changes'}
         </button>
 
@@ -253,14 +322,8 @@ function Appearance() {
           <span>Live Preview</span>
           <div className="dashboard__preview-dot"></div>
         </div>
-        <div
-          className="dashboard__phone"
-          style={{ borderColor: activeTheme.primary }}
-        >
-          <div
-            className="dashboard__phone-notch"
-            style={{ background: activeTheme.primary }}
-          ></div>
+        <div className="dashboard__phone" style={{ borderColor: activeTheme.primary }}>
+          <div className="dashboard__phone-notch" style={{ background: activeTheme.primary }}></div>
           <div
             className="dashboard__phone-screen"
             style={{ background: `linear-gradient(180deg, ${activeTheme.bg} 0%, #ffffff 100%)` }}
@@ -268,9 +331,17 @@ function Appearance() {
             <div className="dashboard__mock-profile">
               <div
                 className="dashboard__mock-avatar"
-                style={{ background: `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})` }}
+                style={{
+                  background: displayAvatar ? 'none' : `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})`,
+                  overflow: 'hidden',
+                  padding: 0
+                }}
               >
-                {profile?.username?.[0]?.toUpperCase() || 'U'}
+                {displayAvatar ? (
+                  <img src={displayAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  profile?.username?.[0]?.toUpperCase()
+                )}
               </div>
               <div className="dashboard__mock-name">
                 {form.full_name || `@${profile?.username}`}

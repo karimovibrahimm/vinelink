@@ -7,6 +7,7 @@ import ForgotPassword from './pages/Auth/ForgotPassword'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Appearance from './pages/Dashboard/Appearance'
 import Analytics from './pages/Dashboard/Analytics'
+import Settings from './pages/Dashboard/Settings'
 import Profile from './pages/Profile/Profile'
 import './App.css'
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/appearance" element={<Appearance />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
+          <Route path="/dashboard/settings" element={<Settings />} />
           <Route path="/:username" element={<Profile />} />
         </Routes>
       </div>

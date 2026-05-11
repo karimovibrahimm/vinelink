@@ -3,6 +3,15 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './Profile.css'
 
+const themes = {
+  default: { primary: '#1a3a2a', accent: '#c9a84c', bg: '#f7f5f0', bgGradient: '#e8f0eb' },
+  ocean:   { primary: '#1a2e4a', accent: '#4a9eca', bg: '#f0f5fa', bgGradient: '#d8eaf5' },
+  rose:    { primary: '#4a1a2e', accent: '#ca4a7a', bg: '#faf0f3', bgGradient: '#f5d8e3' },
+  midnight:{ primary: '#1a1a2e', accent: '#7a6aca', bg: '#f0f0fa', bgGradient: '#dcdaf5' },
+  sand:    { primary: '#3a2e1a', accent: '#ca9a4a', bg: '#faf5f0', bgGradient: '#f5ead8' },
+  slate:   { primary: '#1a2a3a', accent: '#4acaca', bg: '#f0f5f5', bgGradient: '#d8f0f0' },
+}
+
 function Profile() {
   const { username } = useParams()
   const [profile, setProfile] = useState(null)
@@ -40,8 +49,13 @@ function Profile() {
     setLoading(false)
   }
 
-  const handleLinkClick = (url) => {
-    window.open(url, '_blank', 'noreferrer')
+  const handleLinkClick = async (link) => {
+    await supabase.from('link_clicks').insert({
+      link_id: link.id,
+      user_id: profile.id,
+      clicked_at: new Date().toISOString()
+    })
+    window.open(link.url, '_blank', 'noreferrer')
   }
 
   if (loading) {
@@ -64,16 +78,36 @@ function Profile() {
     )
   }
 
-  return (
-    <div className="profile">
+  const theme = themes[profile.theme] || themes.default
 
-      {/* Background */}
-      <div className="profile__bg"></div>
+  return (
+    <div
+      className="profile"
+      style={{
+        background: `linear-gradient(160deg, ${theme.bgGradient} 0%, ${theme.bg} 60%)`
+      }}
+    >
+
+      {/* Background blobs */}
+      <div
+        className="profile__bg"
+        style={{
+          background: `
+            radial-gradient(circle at 20% 20%, ${theme.primary}10 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, ${theme.accent}15 0%, transparent 50%)
+          `
+        }}
+      ></div>
 
       <div className="profile__container">
 
         {/* Avatar */}
-        <div className="profile__avatar">
+        <div
+          className="profile__avatar"
+          style={{
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`
+          }}
+        >
           {profile.avatar_url ? (
             <img src={profile.avatar_url} alt={profile.username} />
           ) : (
@@ -83,7 +117,10 @@ function Profile() {
 
         {/* Info */}
         <div className="profile__info">
-          <h1 className="profile__name">
+          <h1
+            className="profile__name"
+            style={{ color: theme.primary }}
+          >
             {profile.full_name || `@${profile.username}`}
           </h1>
           {profile.full_name && (
@@ -102,11 +139,30 @@ function Profile() {
             links.map((link, index) => (
               <button
                 key={link.id}
-                className={`profile__link ${index === 0 ? 'profile__link--featured' : ''}`}
-                onClick={() => handleLinkClick(link.url)}
+                className="profile__link"
+                style={index === 0 ? {
+                  backgroundColor: theme.primary,
+                  borderColor: theme.primary,
+                  color: '#ffffff'
+                } : {
+                  backgroundColor: '#ffffff',
+                  borderColor: `${theme.primary}22`,
+                  color: theme.primary
+                }}
+                onClick={() => handleLinkClick(link)}
               >
                 <span className="profile__link-title">{link.title}</span>
-                <svg className="profile__link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  className="profile__link-arrow"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </button>
