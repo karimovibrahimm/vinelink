@@ -9,6 +9,7 @@ import Appearance from './pages/Dashboard/Appearance'
 import Analytics from './pages/Dashboard/Analytics'
 import Profile from './pages/Profile/Profile'
 import Onboarding from './pages/Onboarding/Onboarding'
+import Settings from './pages/Dashboard/Settings'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import './App.css'
@@ -58,6 +59,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/appearance" element={<Appearance />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
+          <Route path="/dashboard/settings" element={<Settings />} />
           <Route path="/:username" element={<Profile />} />
         </Routes>
       </div>
