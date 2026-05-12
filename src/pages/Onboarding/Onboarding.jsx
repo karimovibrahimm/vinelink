@@ -1,89 +1,75 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import './Onboarding.css'
-import { GoogleGenAI } from "@google/genai";
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 function Onboarding({ user, profile, onComplete }) {
-    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
   const [step, setStep] = useState(1)
   const [socialInput, setSocialInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
-  const handleGenerate = async () => {
-  if (!socialInput.trim()) return
-
-  setLoading(true)
-  setError('')
-
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `
-                    You are helping set up a link-in-bio page.
-
-                    Based on this social media info:
-                    "${socialInput}"
-
-                    Generate a profile for them.
-
-                    Respond ONLY with valid JSON.
-                    No markdown.
-                    No explanation.
-
-                    {
-                    "full_name": "their name or username cleaned up",
-                    "bio": "a punchy 1-2 sentence bio under 100 chars that fits their niche",
-                    "theme": "one of: default, ocean, rose, midnight, sand, slate",
-                    "links": [
-                        {
-                        "title": "link title",
-                        "url": "the actual url they pasted or inferred"
-                        }
-                    ]
-                    }
-                                    `
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 1000
-          }
-        })
-      }
-    )
-
-    const data = await response.json()
-
-    const text =
-      data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-
-    const clean = text.replace(/```json|```/g, '').trim()
-
-    const parsed = JSON.parse(clean)
-
-    setResult(parsed)
-    setStep(2)
-  } catch (e) {
-    console.error(e)
-    setError('Something went wrong. Try again.')
+  const handleSkip = async () => {
+    await supabase
+      .from('profiles')
+      .update({ onboarding_done: true })
+      .eq('id', user.id)
+    onComplete()
   }
 
-  setLoading(false)
-}
+  const handleGenerate = async () => {
+    if (!socialInput.trim()) return
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `You are helping set up a link-in-bio page. Based on this social media info: "${socialInput}", generate a profile for them.
+
+Respond ONLY with a valid JSON object, no markdown, no explanation, no code blocks:
+{
+  "full_name": "their name or username cleaned up",
+  "bio": "a punchy 1-2 sentence bio under 100 chars that fits their niche",
+  "theme": "one of: default, ocean, rose, midnight, sand, slate — pick based on their vibe",
+  "links": [
+    { "title": "link title", "url": "the actual url they pasted or inferred" }
+  ]
+}`
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1000
+            }
+          })
+        }
+      )
+
+      const data = await response.json()
+      const text = data.candidates[0].content.parts[0].text
+      const clean = text.replace(/```json|```/g, '').trim()
+      const parsed = JSON.parse(clean)
+      setResult(parsed)
+      setStep(2)
+    } catch (e) {
+      setError('Something went wrong. Please try again.')
+    }
+
+    setLoading(false)
+  }
 
   const handleApply = async () => {
     setLoading(true)
@@ -112,12 +98,12 @@ function Onboarding({ user, profile, onComplete }) {
   }
 
   const themes = {
-    default: { primary: '#1a3a2a', accent: '#c9a84c', bg: '#f7f5f0' },
-    ocean:   { primary: '#1a2e4a', accent: '#4a9eca', bg: '#f0f5fa' },
-    rose:    { primary: '#4a1a2e', accent: '#ca4a7a', bg: '#faf0f3' },
-    midnight:{ primary: '#1a1a2e', accent: '#7a6aca', bg: '#f0f0fa' },
-    sand:    { primary: '#3a2e1a', accent: '#ca9a4a', bg: '#faf5f0' },
-    slate:   { primary: '#1a2a3a', accent: '#4acaca', bg: '#f0f5f5' },
+    default:  { primary: '#1a3a2a', accent: '#c9a84c', bg: '#f7f5f0' },
+    ocean:    { primary: '#1a2e4a', accent: '#4a9eca', bg: '#f0f5fa' },
+    rose:     { primary: '#4a1a2e', accent: '#ca4a7a', bg: '#faf0f3' },
+    midnight: { primary: '#1a1a2e', accent: '#7a6aca', bg: '#f0f0fa' },
+    sand:     { primary: '#3a2e1a', accent: '#ca9a4a', bg: '#faf5f0' },
+    slate:    { primary: '#1a2a3a', accent: '#4acaca', bg: '#f0f5f5' },
   }
 
   const activeTheme = result ? (themes[result.theme] || themes.default) : themes.default
@@ -166,10 +152,7 @@ function Onboarding({ user, profile, onComplete }) {
               )}
             </button>
 
-            <button
-              className="onboarding__skip"
-              onClick={onComplete}
-            >
+            <button className="onboarding__skip" onClick={handleSkip}>
               Skip and set up manually →
             </button>
           </div>
@@ -181,7 +164,6 @@ function Onboarding({ user, profile, onComplete }) {
             <h1 className="onboarding__title">Looking good, {result.full_name}!</h1>
             <p className="onboarding__subtitle">Here's what AI created for you. You can edit everything after.</p>
 
-            {/* Preview card */}
             <div
               className="onboarding__preview"
               style={{ background: `linear-gradient(160deg, ${activeTheme.bg} 0%, #fff 100%)` }}
@@ -205,7 +187,10 @@ function Onboarding({ user, profile, onComplete }) {
                       background: activeTheme.primary,
                       color: '#fff',
                       borderColor: activeTheme.primary
-                    } : { borderColor: `${activeTheme.primary}22`, color: activeTheme.primary }}
+                    } : {
+                      borderColor: `${activeTheme.primary}22`,
+                      color: activeTheme.primary
+                    }}
                   >
                     {link.title}
                   </div>

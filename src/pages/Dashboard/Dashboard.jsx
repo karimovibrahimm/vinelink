@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import AiAssistant from '../../components/AiAssistant/AiAssistant'
 import {
   DndContext,
   closestCenter,
@@ -19,14 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import './Dashboard.css'
 
 function SortableLink({ link, onEdit, onDelete, onToggle }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: link.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: link.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -41,23 +35,17 @@ function SortableLink({ link, onEdit, onDelete, onToggle }) {
       style={style}
       className={`dashboard__link-item ${!link.active ? 'dashboard__link-item--inactive' : ''}`}
     >
-      <div
-        className="dashboard__link-drag"
-        {...attributes}
-        {...listeners}
-      >
+      <div className="dashboard__link-drag" {...attributes} {...listeners}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
           <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
           <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
         </svg>
       </div>
-
       <div className="dashboard__link-info">
         <div className="dashboard__link-title">{link.title}</div>
         <div className="dashboard__link-url">{link.url}</div>
       </div>
-
       <div className="dashboard__link-actions">
         <button
           className={`dashboard__toggle ${link.active ? 'dashboard__toggle--on' : ''}`}
@@ -97,9 +85,7 @@ function Dashboard() {
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
   useEffect(() => { getUser() }, [])
@@ -113,7 +99,6 @@ function Dashboard() {
       .select('onboarding_done')
       .eq('id', user.id)
       .single()
-
     if (prof && !prof.onboarding_done) {
       window.location.href = '/onboarding'
       return
@@ -124,61 +109,37 @@ function Dashboard() {
   }
 
   const getProfile = async (userId) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
     if (data) setProfile(data)
   }
 
   const getLinks = async (userId) => {
-    const { data } = await supabase
-      .from('links')
-      .select('*')
-      .eq('user_id', userId)
-      .order('position', { ascending: true })
+    const { data } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
     if (data) setLinks(data)
   }
 
   const handleDragEnd = async (event) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
-
     const oldIndex = links.findIndex(l => l.id === active.id)
     const newIndex = links.findIndex(l => l.id === over.id)
     const reordered = arrayMove(links, oldIndex, newIndex)
-
     setLinks(reordered)
-
-    // Update positions in Supabase
-    await Promise.all(
-      reordered.map((link, index) =>
-        supabase.from('links').update({ position: index }).eq('id', link.id)
-      )
-    )
+    await Promise.all(reordered.map((link, index) =>
+      supabase.from('links').update({ position: index }).eq('id', link.id)
+    ))
   }
 
   const handleAddLink = async () => {
     if (!newLink.title || !newLink.url) return
     setSaving(true)
     setError('')
-
     let url = newLink.url
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url
-    }
-
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
     const { error } = await supabase.from('links').insert({
-      user_id: user.id,
-      title: newLink.title,
-      url,
-      position: links.length
+      user_id: user.id, title: newLink.title, url, position: links.length
     })
-
-    if (error) {
-      setError(error.message)
-    } else {
+    if (error) { setError(error.message) } else {
       setNewLink({ title: '', url: '' })
       setAddingLink(false)
       await getLinks(user.id)
@@ -189,21 +150,10 @@ function Dashboard() {
   const handleUpdateLink = async () => {
     if (!editingLink.title || !editingLink.url) return
     setSaving(true)
-
     let url = editingLink.url
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url
-    }
-
-    const { error } = await supabase
-      .from('links')
-      .update({ title: editingLink.title, url })
-      .eq('id', editingLink.id)
-
-    if (!error) {
-      setEditingLink(null)
-      await getLinks(user.id)
-    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
+    const { error } = await supabase.from('links').update({ title: editingLink.title, url }).eq('id', editingLink.id)
+    if (!error) { setEditingLink(null); await getLinks(user.id) }
     setSaving(false)
   }
 
@@ -222,6 +172,23 @@ function Dashboard() {
     window.location.href = '/'
   }
 
+  const handleAiApply = async (applyData) => {
+    if (applyData.full_name || applyData.bio || applyData.theme) {
+      const updates = {}
+      if (applyData.full_name) updates.full_name = applyData.full_name
+      if (applyData.bio) updates.bio = applyData.bio
+      if (applyData.theme) updates.theme = applyData.theme
+      await supabase.from('profiles').update(updates).eq('id', user.id)
+      await getProfile(user.id)
+    }
+    if (applyData.links?.length > 0) {
+      await Promise.all(applyData.links.map(l =>
+        supabase.from('links').update({ title: l.title }).eq('id', l.id)
+      ))
+      await getLinks(user.id)
+    }
+  }
+
   if (loading) {
     return (
       <div className="dashboard__loading">
@@ -234,7 +201,6 @@ function Dashboard() {
   return (
     <div className="dashboard">
 
-      {/* Sidebar */}
       <aside className="dashboard__sidebar">
         <a href="/" className="dashboard__logo">
           <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
@@ -297,7 +263,6 @@ function Dashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="dashboard__main">
         <div className="dashboard__header">
           <div>
@@ -305,12 +270,7 @@ function Dashboard() {
             <p className="dashboard__subtitle">Drag to reorder. Toggle to show or hide.</p>
           </div>
           <div className="dashboard__header-actions">
-            <a
-              href={`/${profile?.username}`}
-              target="_blank"
-              rel="noreferrer"
-              className="dashboard__preview-btn"
-            >
+            <a href={`/${profile?.username}`} target="_blank" rel="noreferrer" className="dashboard__preview-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
@@ -330,10 +290,7 @@ function Dashboard() {
 
         <div className="dashboard__share-bar">
           <span className="dashboard__share-url">vinelink.com/{profile?.username}</span>
-          <button
-            className="dashboard__copy-btn"
-            onClick={() => navigator.clipboard.writeText(`https://vinelink.com/${profile?.username}`)}
-          >
+          <button className="dashboard__copy-btn" onClick={() => navigator.clipboard.writeText(`https://vinelink.com/${profile?.username}`)}>
             Copy link
           </button>
         </div>
@@ -344,31 +301,12 @@ function Dashboard() {
           <div className="dashboard__link-form">
             <h3 className="dashboard__form-title">Add new link</h3>
             <div className="dashboard__form-fields">
-              <input
-                className="dashboard__input"
-                type="text"
-                placeholder="Title (e.g. My YouTube Channel)"
-                value={newLink.title}
-                onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-              />
-              <input
-                className="dashboard__input"
-                type="text"
-                placeholder="URL (e.g. youtube.com/yourchannel)"
-                value={newLink.url}
-                onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-              />
+              <input className="dashboard__input" type="text" placeholder="Title (e.g. My YouTube Channel)" value={newLink.title} onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}/>
+              <input className="dashboard__input" type="text" placeholder="URL (e.g. youtube.com/yourchannel)" value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}/>
             </div>
             <div className="dashboard__form-actions">
-              <button
-                className="dashboard__cancel-btn"
-                onClick={() => { setAddingLink(false); setNewLink({ title: '', url: '' }) }}
-              >
-                Cancel
-              </button>
-              <button className="dashboard__save-btn" onClick={handleAddLink} disabled={saving}>
-                {saving ? 'Saving...' : 'Add link'}
-              </button>
+              <button className="dashboard__cancel-btn" onClick={() => { setAddingLink(false); setNewLink({ title: '', url: '' }) }}>Cancel</button>
+              <button className="dashboard__save-btn" onClick={handleAddLink} disabled={saving}>{saving ? 'Saving...' : 'Add link'}</button>
             </div>
           </div>
         )}
@@ -377,24 +315,12 @@ function Dashboard() {
           <div className="dashboard__link-form">
             <h3 className="dashboard__form-title">Edit link</h3>
             <div className="dashboard__form-fields">
-              <input
-                className="dashboard__input"
-                type="text"
-                value={editingLink.title}
-                onChange={(e) => setEditingLink({ ...editingLink, title: e.target.value })}
-              />
-              <input
-                className="dashboard__input"
-                type="text"
-                value={editingLink.url}
-                onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })}
-              />
+              <input className="dashboard__input" type="text" value={editingLink.title} onChange={(e) => setEditingLink({ ...editingLink, title: e.target.value })}/>
+              <input className="dashboard__input" type="text" value={editingLink.url} onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })}/>
             </div>
             <div className="dashboard__form-actions">
               <button className="dashboard__cancel-btn" onClick={() => setEditingLink(null)}>Cancel</button>
-              <button className="dashboard__save-btn" onClick={handleUpdateLink} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
-              </button>
+              <button className="dashboard__save-btn" onClick={handleUpdateLink} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         )}
@@ -405,28 +331,13 @@ function Dashboard() {
               <div className="dashboard__empty-icon">🔗</div>
               <h3>No links yet</h3>
               <p>Add your first link to get started</p>
-              <button className="dashboard__add-btn" onClick={() => setAddingLink(true)}>
-                Add your first link
-              </button>
+              <button className="dashboard__add-btn" onClick={() => setAddingLink(true)}>Add your first link</button>
             </div>
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={links.map(l => l.id)}
-                strategy={verticalListSortingStrategy}
-              >
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={links.map(l => l.id)} strategy={verticalListSortingStrategy}>
                 {links.map((link) => (
-                  <SortableLink
-                    key={link.id}
-                    link={link}
-                    onEdit={setEditingLink}
-                    onDelete={handleDeleteLink}
-                    onToggle={handleToggleLink}
-                  />
+                  <SortableLink key={link.id} link={link} onEdit={setEditingLink} onDelete={handleDeleteLink} onToggle={handleToggleLink}/>
                 ))}
               </SortableContext>
             </DndContext>
@@ -434,7 +345,6 @@ function Dashboard() {
         </div>
       </main>
 
-      {/* Right Preview */}
       <aside className="dashboard__preview">
         <div className="dashboard__preview-header">
           <span>Live Preview</span>
@@ -444,9 +354,7 @@ function Dashboard() {
           <div className="dashboard__phone-notch"></div>
           <div className="dashboard__phone-screen">
             <div className="dashboard__mock-profile">
-              <div className="dashboard__mock-avatar">
-                {profile?.username?.[0]?.toUpperCase() || 'U'}
-              </div>
+              <div className="dashboard__mock-avatar">{profile?.username?.[0]?.toUpperCase() || 'U'}</div>
               <div className="dashboard__mock-name">@{profile?.username}</div>
               <div className="dashboard__mock-bio">{profile?.bio || 'Add a bio in appearance'}</div>
             </div>
@@ -455,10 +363,7 @@ function Dashboard() {
                 <div className="dashboard__mock-empty">Your links will appear here</div>
               ) : (
                 links.filter(l => l.active).map((link, i) => (
-                  <div
-                    key={link.id}
-                    className={`dashboard__mock-link ${i === 0 ? 'dashboard__mock-link--first' : ''}`}
-                  >
+                  <div key={link.id} className={`dashboard__mock-link ${i === 0 ? 'dashboard__mock-link--first' : ''}`}>
                     {link.title}
                   </div>
                 ))
@@ -469,7 +374,6 @@ function Dashboard() {
         </div>
       </aside>
 
-      {/* Mobile Bottom Nav */}
       <nav className="dashboard__mobile-nav">
         <a href="/dashboard" className="dashboard__mobile-nav-item dashboard__mobile-nav-item--active">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -501,6 +405,8 @@ function Dashboard() {
           <span>Settings</span>
         </a>
       </nav>
+
+      <AiAssistant user={user} profile={profile} links={links} onApply={handleAiApply}/>
 
     </div>
   )

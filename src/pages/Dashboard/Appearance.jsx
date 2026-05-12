@@ -1,15 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
+import { themes } from '../../lib/themes'
 import './Appearance.css'
-
-const themes = [
-  { id: 'default', name: 'Forest', primary: '#1a3a2a', accent: '#c9a84c', bg: '#f7f5f0' },
-  { id: 'ocean', name: 'Ocean', primary: '#1a2e4a', accent: '#4a9eca', bg: '#f0f5fa' },
-  { id: 'rose', name: 'Rose', primary: '#4a1a2e', accent: '#ca4a7a', bg: '#faf0f3' },
-  { id: 'midnight', name: 'Midnight', primary: '#1a1a2e', accent: '#7a6aca', bg: '#f0f0fa' },
-  { id: 'sand', name: 'Sand', primary: '#3a2e1a', accent: '#ca9a4a', bg: '#faf5f0' },
-  { id: 'slate', name: 'Slate', primary: '#1a2a3a', accent: '#4acaca', bg: '#f0f5f5' },
-]
 
 function Appearance() {
   const [user, setUser] = useState(null)
@@ -21,7 +13,7 @@ function Appearance() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
-  const [form, setForm] = useState({ full_name: '', bio: '', theme: 'default' })
+  const [form, setForm] = useState({ full_name: '', bio: '', theme: 'forest' })
   const fileInputRef = useRef(null)
 
   useEffect(() => { getUser() }, [])
@@ -36,91 +28,49 @@ function Appearance() {
   }
 
   const getProfile = async (userId) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
     if (data) {
       setProfile(data)
       setAvatarUrl(data.avatar_url || null)
       setForm({
         full_name: data.full_name || '',
         bio: data.bio || '',
-        theme: data.theme || 'default'
+        theme: data.theme || 'forest'
       })
     }
   }
 
   const getLinks = async (userId) => {
-    const { data } = await supabase
-      .from('links')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('active', true)
-      .order('position', { ascending: true })
+    const { data } = await supabase.from('links').select('*').eq('user_id', userId).eq('active', true).order('position', { ascending: true })
     if (data) setLinks(data)
   }
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be under 2MB')
-      return
-    }
-
-    // Show preview immediately
+    if (file.size > 2 * 1024 * 1024) { alert('Image must be under 2MB'); return }
     const reader = new FileReader()
     reader.onload = (e) => setAvatarPreview(e.target.result)
     reader.readAsDataURL(file)
-
     setUploadingAvatar(true)
-
     const fileExt = file.name.split('.').pop()
     const filePath = `${user.id}/avatar.${fileExt}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { upsert: true })
-
-    if (uploadError) {
-      alert('Upload failed: ' + uploadError.message)
-      setUploadingAvatar(false)
-      return
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath)
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', user.id)
-
-    if (!updateError) {
-      setAvatarUrl(publicUrl)
-    }
-
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true })
+    if (uploadError) { alert('Upload failed: ' + uploadError.message); setUploadingAvatar(false); return }
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
+    if (!updateError) setAvatarUrl(publicUrl)
     setUploadingAvatar(false)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: form.full_name,
-        bio: form.bio,
-        theme: form.theme
-      })
-      .eq('id', user.id)
-
-    if (!error) {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    }
+    const { error } = await supabase.from('profiles').update({
+      full_name: form.full_name,
+      bio: form.bio,
+      theme: form.theme
+    }).eq('id', user.id)
+    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
     setSaving(false)
   }
 
@@ -132,19 +82,16 @@ function Appearance() {
   const activeTheme = themes.find(t => t.id === form.theme) || themes[0]
   const displayAvatar = avatarPreview || avatarUrl
 
-  if (loading) {
-    return (
-      <div className="dashboard__loading">
-        <div className="dashboard__spinner"></div>
-        <p>Loading...</p>
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="dashboard__loading">
+      <div className="dashboard__spinner"></div>
+      <p>Loading...</p>
+    </div>
+  )
 
   return (
     <div className="dashboard">
 
-      {/* Sidebar */}
       <aside className="dashboard__sidebar">
         <a href="/" className="dashboard__logo">
           <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
@@ -188,9 +135,7 @@ function Appearance() {
         </nav>
         <div className="dashboard__sidebar-bottom">
           <div className="dashboard__profile-pill">
-            <div className="dashboard__profile-avatar">
-              {profile?.username?.[0]?.toUpperCase() || 'U'}
-            </div>
+            <div className="dashboard__profile-avatar">{profile?.username?.[0]?.toUpperCase() || 'U'}</div>
             <div className="dashboard__profile-info">
               <div className="dashboard__profile-name">@{profile?.username}</div>
               <div className="dashboard__profile-plan">Free plan</div>
@@ -207,7 +152,6 @@ function Appearance() {
         </div>
       </aside>
 
-      {/* Main */}
       <main className="dashboard__main">
         <div className="dashboard__header">
           <div>
@@ -219,35 +163,16 @@ function Appearance() {
           </button>
         </div>
 
-        {/* Avatar Upload */}
         <div className="appearance__section">
           <h2 className="appearance__section-title">Profile Photo</h2>
           <div className="appearance__avatar-row">
             <div className="appearance__avatar-preview">
-              {displayAvatar ? (
-                <img src={displayAvatar} alt="avatar" />
-              ) : (
-                <span>{profile?.username?.[0]?.toUpperCase()}</span>
-              )}
-              {uploadingAvatar && (
-                <div className="appearance__avatar-overlay">
-                  <div className="dashboard__spinner"></div>
-                </div>
-              )}
+              {displayAvatar ? <img src={displayAvatar} alt="avatar" /> : <span>{profile?.username?.[0]?.toUpperCase()}</span>}
+              {uploadingAvatar && <div className="appearance__avatar-overlay"><div className="dashboard__spinner"></div></div>}
             </div>
             <div className="appearance__avatar-actions">
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleAvatarChange}
-                style={{ display: 'none' }}
-              />
-              <button
-                className="appearance__upload-btn"
-                onClick={() => fileInputRef.current.click()}
-                disabled={uploadingAvatar}
-              >
+              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleAvatarChange} style={{ display: 'none' }}/>
+              <button className="appearance__upload-btn" onClick={() => fileInputRef.current.click()} disabled={uploadingAvatar}>
                 {uploadingAvatar ? 'Uploading...' : 'Upload photo'}
               </button>
               <p className="appearance__hint">JPG, PNG or GIF. Max 2MB.</p>
@@ -255,36 +180,22 @@ function Appearance() {
           </div>
         </div>
 
-        {/* Profile Info */}
         <div className="appearance__section">
           <h2 className="appearance__section-title">Profile Info</h2>
           <div className="appearance__fields">
             <div className="appearance__field">
               <label className="appearance__label">Display Name</label>
-              <input
-                className="dashboard__input"
-                type="text"
-                placeholder="Your full name"
-                value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              />
+              <input className="dashboard__input" type="text" placeholder="Your full name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })}/>
               <span className="appearance__hint">This appears at the top of your page</span>
             </div>
             <div className="appearance__field">
               <label className="appearance__label">Bio</label>
-              <textarea
-                className="dashboard__input appearance__textarea"
-                placeholder="Tell your audience who you are..."
-                value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                maxLength={160}
-              />
+              <textarea className="dashboard__input appearance__textarea" placeholder="Tell your audience who you are..." value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={160}/>
               <span className="appearance__hint">{form.bio.length}/160 characters</span>
             </div>
           </div>
         </div>
 
-        {/* Theme Picker */}
         <div className="appearance__section">
           <h2 className="appearance__section-title">Theme</h2>
           <p className="appearance__section-subtitle">Choose a color theme for your page</p>
@@ -297,14 +208,21 @@ function Appearance() {
               >
                 <div
                   className="appearance__theme-preview"
-                  style={{ background: `linear-gradient(135deg, ${theme.primary} 50%, ${theme.accent} 100%)` }}
+                  style={{
+                    background: theme.id === 'aurora' ? 'linear-gradient(135deg, #0a1628, #64ffda)'
+                      : theme.id === 'neon' ? 'linear-gradient(135deg, #0a0a0a, #00ff88)'
+                      : theme.id === 'glass' ? 'linear-gradient(135deg, #16213e, #e94560)'
+                      : theme.id === 'midnight' ? 'linear-gradient(135deg, #0d0d1a, #7a6aca)'
+                      : theme.id === 'candy' ? 'linear-gradient(135deg, #d63384, #fd7e14)'
+                      : theme.id === 'paper' ? 'linear-gradient(135deg, #f5f0e8, #c0392b)'
+                      : theme.id === 'earth' ? 'linear-gradient(135deg, #3d2b1f, #8b6914)'
+                      : `linear-gradient(135deg, ${theme.primary} 50%, ${theme.accent} 100%)`
+                  }}
                 >
                   <div className="appearance__theme-dot" style={{ background: theme.bg }}></div>
                 </div>
                 <span className="appearance__theme-name">{theme.name}</span>
-                {form.theme === theme.id && (
-                  <div className="appearance__theme-check">✓</div>
-                )}
+                {form.theme === theme.id && <div className="appearance__theme-check">✓</div>}
               </button>
             ))}
           </div>
@@ -313,10 +231,8 @@ function Appearance() {
         <button className="appearance__save-btn" onClick={handleSave} disabled={saving}>
           {saved ? '✓ Changes saved!' : saving ? 'Saving...' : 'Save changes'}
         </button>
-
       </main>
 
-      {/* Live Preview */}
       <aside className="dashboard__preview">
         <div className="dashboard__preview-header">
           <span>Live Preview</span>
@@ -324,57 +240,37 @@ function Appearance() {
         </div>
         <div className="dashboard__phone" style={{ borderColor: activeTheme.primary }}>
           <div className="dashboard__phone-notch" style={{ background: activeTheme.primary }}></div>
-          <div
-            className="dashboard__phone-screen"
-            style={{ background: `linear-gradient(180deg, ${activeTheme.bg} 0%, #ffffff 100%)` }}
-          >
+          <div className="dashboard__phone-screen" style={{ background: `linear-gradient(180deg, ${activeTheme.bg} 0%, #ffffff 100%)` }}>
             <div className="dashboard__mock-profile">
-              <div
-                className="dashboard__mock-avatar"
-                style={{
-                  background: displayAvatar ? 'none' : `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})`,
-                  overflow: 'hidden',
-                  padding: 0
-                }}
-              >
-                {displayAvatar ? (
-                  <img src={displayAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  profile?.username?.[0]?.toUpperCase()
-                )}
+              <div className="dashboard__mock-avatar" style={{
+                background: displayAvatar ? 'none' : `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})`,
+                overflow: 'hidden', padding: 0
+              }}>
+                {displayAvatar
+                  ? <img src={displayAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                  : profile?.username?.[0]?.toUpperCase()
+                }
               </div>
-              <div className="dashboard__mock-name">
-                {form.full_name || `@${profile?.username}`}
-              </div>
-              <div className="dashboard__mock-bio">
-                {form.bio || 'Your bio appears here'}
-              </div>
+              <div className="dashboard__mock-name">{form.full_name || `@${profile?.username}`}</div>
+              <div className="dashboard__mock-bio">{form.bio || 'Your bio appears here'}</div>
             </div>
             <div className="dashboard__mock-links">
-              {links.length === 0 ? (
-                <div className="dashboard__mock-empty">Add links to see preview</div>
-              ) : (
-                links.slice(0, 4).map((link, i) => (
-                  <div
-                    key={link.id}
-                    className="dashboard__mock-link"
-                    style={i === 0 ? {
-                      background: activeTheme.primary,
-                      color: '#fff',
-                      borderColor: activeTheme.primary
-                    } : {}}
-                  >
+              {links.length === 0
+                ? <div className="dashboard__mock-empty">Add links to see preview</div>
+                : links.slice(0, 4).map((link, i) => (
+                  <div key={link.id} className="dashboard__mock-link" style={i === 0 ? {
+                    background: activeTheme.primary, color: '#fff', borderColor: activeTheme.primary
+                  } : {}}>
                     {link.title}
                   </div>
                 ))
-              )}
+              }
             </div>
             <div className="dashboard__mock-footer">vinelink.com/{profile?.username}</div>
           </div>
         </div>
       </aside>
 
-      {/* Mobile Bottom Nav */}
       <nav className="dashboard__mobile-nav">
         <a href="/dashboard" className="dashboard__mobile-nav-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
