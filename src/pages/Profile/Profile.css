@@ -29,8 +29,9 @@
   align-items: center;
   position: relative;
   z-index: 1;
-}
 
+  animation: profileFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
 /* Avatar */
 .profile__avatar {
   width: 96px;
@@ -270,5 +271,44 @@
 
   .profile__link {
     padding: 16px 20px;
+  }
+}
+
+
+.profile__link {
+  animation: profileLinkIn 0.5s ease backwards;
+}
+
+.profile__link:nth-child(1) { animation-delay: 0.1s; }
+.profile__link:nth-child(2) { animation-delay: 0.2s; }
+.profile__link:nth-child(3) { animation-delay: 0.3s; }
+.profile__link:nth-child(4) { animation-delay: 0.4s; }
+.profile__link:nth-child(5) { animation-delay: 0.5s; }
+.profile__link:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes profileLinkIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+@keyframes profileFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.98);
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }

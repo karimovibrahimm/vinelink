@@ -181,7 +181,7 @@ function Settings() {
               <div className="settings__plan-name">Free Plan</div>
               <div className="settings__plan-desc">5 links, basic themes, Vinelink subdomain</div>
             </div>
-            <a href="#upgrade" className="settings__upgrade-btn">
+            <a href="#upgrade" className="settings__upgrade-btn" onClick={() => alert('Subscriptions Coming Soon!')}>
               ⚡ Upgrade to Pro — $4/mo
             </a>
           </div>
