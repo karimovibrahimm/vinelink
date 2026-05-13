@@ -80,13 +80,15 @@
   color: var(--color-error);
 }
 
-/* Chart */
+/* ===================== CHART ===================== */
+
 .analytics__chart-card {
   background-color: var(--color-white);
   border: 1.5px solid var(--color-background-dark);
   border-radius: var(--radius-lg);
   padding: 28px;
   margin-bottom: 20px;
+  overflow: visible;
 }
 
 .analytics__chart-header {
@@ -111,26 +113,47 @@
   border-radius: var(--radius-full);
 }
 
+/* BASE CHART (7 & 30 days) */
 .analytics__chart {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 4px;
   height: 180px;
+  width: 100%;
+  overflow: visible;
+  position: relative;
 }
 
+/* 90 DAYS SCROLL MODE */
+.analytics__chart--scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+}
+
+/* bars */
 .analytics__bar-col {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   height: 100%;
+  position: relative;
+}
+
+/* IMPORTANT: shrink bars only in 90 days */
+.analytics__chart--scroll .analytics__bar-col {
+  flex: 0 0 22px;
+  min-width: 22px;
 }
 
 .analytics__bar-value {
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-muted);
+  line-height: 1;
 }
 
 .analytics__bar-wrap {
@@ -142,16 +165,70 @@
 
 .analytics__bar {
   width: 100%;
-  background: linear-gradient(180deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
-  border-radius: 6px 6px 0 0;
+  background: linear-gradient(
+    180deg,
+    var(--color-primary-light) 0%,
+    var(--color-primary) 100%
+  );
+  border-radius: 4px 4px 0 0;
   transition: var(--transition-slow);
   min-height: 4px;
 }
 
+.analytics__bar:hover {
+  filter: brightness(1.08);
+}
+
 .analytics__bar-label {
-  font-size: var(--font-size-xs);
+  font-size: 9px;
   color: var(--color-text-muted);
   font-weight: 500;
+  line-height: 1;
+  height: 10px;
+}
+
+/* TOOLTIP */
+.analytics__bar-tooltip {
+  position: absolute;
+  top: -52px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: var(--color-primary-dark);
+  color: white;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 9999;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.analytics__bar-tooltip strong {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analytics__bar-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0 5px;
+  border-style: solid;
+  border-color: var(--color-primary-dark) transparent transparent transparent;
+}
+
+.analytics__bar-col:hover .analytics__bar-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Top links */
@@ -232,47 +309,22 @@
   flex-shrink: 0;
 }
 
-/* Upgrade banner */
-.analytics__upgrade {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  border-radius: var(--radius-lg);
-  padding: 24px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 40px;
-  flex-wrap: wrap;
+/* MOBILE NOTE */
+.analytics__mobile-note {
+  display: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
-.analytics__upgrade-title {
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  color: var(--color-white);
-  margin-bottom: 4px;
+@media (max-width: 768px) {
+  .analytics__mobile-note {
+    display: block;
+  }
 }
 
-.analytics__upgrade-sub {
-  font-size: var(--font-size-sm);
-  color: rgba(255,255,255,0.7);
-}
-
-.analytics__upgrade-btn {
-  background-color: var(--color-accent);
-  color: var(--color-white);
-  padding: 12px 24px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-  transition: var(--transition);
-}
-
-.analytics__upgrade-btn:hover {
-  background-color: var(--color-accent-light);
-  transform: translateY(-1px);
-}
-
+/* RESPONSIVE */
 @media (max-width: 968px) {
   .analytics__stats {
     grid-template-columns: repeat(2, 1fr);
@@ -293,6 +345,7 @@
   }
 }
 
+/* EMPTY STATE */
 .analytics__no-data {
   text-align: center;
   padding: 40px 20px;
