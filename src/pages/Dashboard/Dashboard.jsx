@@ -291,8 +291,8 @@ function Dashboard() {
         </div>
 
         <div className="dashboard__share-bar">
-          <span className="dashboard__share-url">vinelink.com/{profile?.username}</span>
-          <button className="dashboard__copy-btn" onClick={() => navigator.clipboard.writeText(`https://vinelink.com/${profile?.username}`)}>
+          <span className="dashboard__share-url">vinelink.xyz/{profile?.username}</span>
+          <button className="dashboard__copy-btn" onClick={() => navigator.clipboard.writeText(`https://vinelink.vercel.app/${profile?.username}`)}>
             Copy link
           </button>
         </div>
