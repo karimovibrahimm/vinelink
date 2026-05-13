@@ -1,0 +1,274 @@
+/* ─── PhonePreview wrapper (replaces dashboard__preview aside) ─── */
+
+.phone-preview {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 20px;
+  border-left: 1.5px solid var(--color-background-dark);
+  background: var(--color-background);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.phone-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.phone-preview__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pp-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ─── Phone frame ─── */
+
+.phone-preview__frame {
+  position: relative;
+  width: 200px;
+  margin: 0 auto;
+  border-radius: 32px;
+  border: 2.5px solid;
+  background: #111;
+  overflow: hidden;
+  aspect-ratio: 9 / 19.5;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.phone-preview__notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 16px;
+  border-radius: 0 0 12px 12px;
+  z-index: 10;
+  transition: background 0.35s ease;
+}
+
+/* ─── Screen ─── */
+
+.phone-preview__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transition: background 0.35s ease;
+}
+
+/* ─── Pattern overlays (ppo) ─── */
+
+.ppo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Midnight — stars */
+.ppo--stars {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 50px 50px, 80px 80px, 35px 35px;
+  background-position: 0 0, 25px 25px, 13px 8px;
+}
+
+/* Neon — grid */
+.ppo--grid {
+  background-image:
+    linear-gradient(var(--neon, #00ff88) 1px, transparent 1px),
+    linear-gradient(90deg, var(--neon, #00ff88) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.07;
+}
+
+/* Aurora — animated colour blobs */
+.ppo--aurora {
+  background: radial-gradient(ellipse 80% 60% at 30% 40%, color-mix(in srgb, var(--accent, #64ffda) 25%, transparent), transparent 70%),
+              radial-gradient(ellipse 60% 80% at 70% 70%, color-mix(in srgb, #7c3aed 20%, transparent), transparent 70%);
+  animation: pp-aurora 6s ease-in-out infinite alternate;
+}
+
+@keyframes pp-aurora {
+  from { opacity: 0.7; transform: scale(1); }
+  to   { opacity: 1;   transform: scale(1.06); }
+}
+
+/* Glass — subtle shimmer bands */
+.ppo--glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.05) 0%,
+    rgba(255,255,255,0.00) 40%,
+    rgba(255,255,255,0.06) 60%,
+    rgba(255,255,255,0.00) 100%
+  );
+}
+
+/* Paper — ruled lines */
+.ppo--noise {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent,
+    transparent 18px,
+    rgba(0,0,0,0.06) 18px,
+    rgba(0,0,0,0.06) 19px
+  );
+}
+
+/* Candy — polka dots */
+.ppo--dots {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--accent, #d63384) 30%, transparent) 1.5px, transparent 1.5px);
+  background-size: 14px 14px;
+  opacity: 0.5;
+}
+
+/* Earth — subtle weave */
+.ppo--texture {
+  background-image:
+    repeating-linear-gradient(45deg,  rgba(61,43,31,0.04) 0px, rgba(61,43,31,0.04) 1px, transparent 1px, transparent 8px),
+    repeating-linear-gradient(-45deg, rgba(61,43,31,0.04) 0px, rgba(61,43,31,0.04) 1px, transparent 1px, transparent 8px);
+}
+
+/* ─── Content (ppc) ─── */
+
+.ppc {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 26px 12px 14px;
+  gap: 5px;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.ppc::-webkit-scrollbar { display: none; }
+
+/* Font variants */
+.ppc--mono    { font-family: 'Courier New', monospace; }
+.ppc--serif   { font-family: Georgia, 'Times New Roman', serif; }
+.ppc--rounded { font-family: 'Trebuchet MS', sans-serif; }
+.ppc--system  { font-family: inherit; }
+
+/* Avatar */
+.ppc__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.ppc__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ppc__avatar span {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Name */
+.ppc__name {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+/* Bio */
+.ppc__bio {
+  font-size: 9px;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 158px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.3s;
+  margin-bottom: 4px;
+}
+
+/* Links container */
+.ppc__links {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Individual link */
+.ppc__link {
+  width: 100%;
+  padding: 6.5px 10px;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.ppc__empty {
+  font-size: 9px;
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* Footer */
+.ppc__footer {
+  font-size: 7.5px;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 10px;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1200px) {
+  .phone-preview { width: 240px; }
+}
+
+@media (max-width: 1024px) {
+  .phone-preview { display: none; }
+}

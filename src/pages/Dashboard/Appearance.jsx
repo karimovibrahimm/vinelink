@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { themes } from '../../lib/themes'
-import './Appearance.css'
+import { getThemeById } from '../../lib/themes';
+import './Appearance.css';
+import PhonePreview from '../../components/PhonePreview/PhonePreview'
 
 function Appearance() {
   const [user, setUser] = useState(null)
@@ -233,43 +235,11 @@ function Appearance() {
         </button>
       </main>
 
-      <aside className="dashboard__preview">
-        <div className="dashboard__preview-header">
-          <span>Live Preview</span>
-          <div className="dashboard__preview-dot"></div>
-        </div>
-        <div className="dashboard__phone" style={{ borderColor: activeTheme.primary }}>
-          <div className="dashboard__phone-notch" style={{ background: activeTheme.primary }}></div>
-          <div className="dashboard__phone-screen" style={{ background: `linear-gradient(180deg, ${activeTheme.bg} 0%, #ffffff 100%)` }}>
-            <div className="dashboard__mock-profile">
-              <div className="dashboard__mock-avatar" style={{
-                background: displayAvatar ? 'none' : `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})`,
-                overflow: 'hidden', padding: 0
-              }}>
-                {displayAvatar
-                  ? <img src={displayAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-                  : profile?.username?.[0]?.toUpperCase()
-                }
-              </div>
-              <div className="dashboard__mock-name">{form.full_name || `@${profile?.username}`}</div>
-              <div className="dashboard__mock-bio">{form.bio || 'Your bio appears here'}</div>
-            </div>
-            <div className="dashboard__mock-links">
-              {links.length === 0
-                ? <div className="dashboard__mock-empty">Add links to see preview</div>
-                : links.slice(0, 4).map((link, i) => (
-                  <div key={link.id} className="dashboard__mock-link" style={i === 0 ? {
-                    background: activeTheme.primary, color: '#fff', borderColor: activeTheme.primary
-                  } : {}}>
-                    {link.title}
-                  </div>
-                ))
-              }
-            </div>
-            <div className="dashboard__mock-footer">vinelink.com/{profile?.username}</div>
-          </div>
-        </div>
-      </aside>
+      <PhonePreview
+        profile={{ ...profile, full_name: form.full_name, bio: form.bio, avatar_url: avatarPreview || avatarUrl }}
+        links={links}
+        themeObj={activeTheme}
+      />
 
       <nav className="dashboard__mobile-nav">
         <a href="/dashboard" className="dashboard__mobile-nav-item">

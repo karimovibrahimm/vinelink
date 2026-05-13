@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import AiAssistant from '../../components/AiAssistant/AiAssistant'
+import { getThemeById } from '../../lib/themes'
+import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import {
   DndContext,
   closestCenter,
@@ -345,34 +347,7 @@ function Dashboard() {
         </div>
       </main>
 
-      <aside className="dashboard__preview">
-        <div className="dashboard__preview-header">
-          <span>Live Preview</span>
-          <div className="dashboard__preview-dot"></div>
-        </div>
-        <div className="dashboard__phone">
-          <div className="dashboard__phone-notch"></div>
-          <div className="dashboard__phone-screen">
-            <div className="dashboard__mock-profile">
-              <div className="dashboard__mock-avatar">{profile?.username?.[0]?.toUpperCase() || 'U'}</div>
-              <div className="dashboard__mock-name">@{profile?.username}</div>
-              <div className="dashboard__mock-bio">{profile?.bio || 'Add a bio in appearance'}</div>
-            </div>
-            <div className="dashboard__mock-links">
-              {links.filter(l => l.active).length === 0 ? (
-                <div className="dashboard__mock-empty">Your links will appear here</div>
-              ) : (
-                links.filter(l => l.active).map((link, i) => (
-                  <div key={link.id} className={`dashboard__mock-link ${i === 0 ? 'dashboard__mock-link--first' : ''}`}>
-                    {link.title}
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="dashboard__mock-footer">vinelink.com/{profile?.username}</div>
-          </div>
-        </div>
-      </aside>
+      <PhonePreview profile={profile} links={links} themeObj={getThemeById(profile?.theme)} />
 
       <nav className="dashboard__mobile-nav">
         <a href="/dashboard" className="dashboard__mobile-nav-item dashboard__mobile-nav-item--active">
