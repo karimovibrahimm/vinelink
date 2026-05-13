@@ -22,7 +22,6 @@ function Navbar() {
         {/* Desktop Nav */}
         <ul className="navbar__links">
           <li><a href="#features">Features</a></li>
-          <li><a href="#pricing">Pricing</a></li>
           <li><a href="#examples">Examples</a></li>
         </ul>
 

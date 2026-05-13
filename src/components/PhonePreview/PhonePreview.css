@@ -1,4 +1,4 @@
-/* ─── PhonePreview wrapper (replaces dashboard__preview aside) ─── */
+/* ─── PhonePreview wrapper ─── */
 
 .phone-preview {
   width: 280px;
@@ -74,7 +74,7 @@
   transition: background 0.35s ease;
 }
 
-/* ─── Pattern overlays (ppo) ─── */
+/* ─── Pattern overlays ─── */
 
 .ppo {
   position: absolute;
@@ -83,7 +83,6 @@
   z-index: 1;
 }
 
-/* Midnight — stars */
 .ppo--stars {
   background-image:
     radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px),
@@ -93,7 +92,6 @@
   background-position: 0 0, 25px 25px, 13px 8px;
 }
 
-/* Neon — grid */
 .ppo--grid {
   background-image:
     linear-gradient(var(--neon, #00ff88) 1px, transparent 1px),
@@ -102,10 +100,10 @@
   opacity: 0.07;
 }
 
-/* Aurora — animated colour blobs */
 .ppo--aurora {
-  background: radial-gradient(ellipse 80% 60% at 30% 40%, color-mix(in srgb, var(--accent, #64ffda) 25%, transparent), transparent 70%),
-              radial-gradient(ellipse 60% 80% at 70% 70%, color-mix(in srgb, #7c3aed 20%, transparent), transparent 70%);
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 40%, color-mix(in srgb, var(--accent, #64ffda) 25%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 80% at 70% 70%, color-mix(in srgb, #7c3aed 20%, transparent), transparent 70%);
   animation: pp-aurora 6s ease-in-out infinite alternate;
 }
 
@@ -114,43 +112,33 @@
   to   { opacity: 1;   transform: scale(1.06); }
 }
 
-/* Glass — subtle shimmer bands */
 .ppo--glass {
-  background: linear-gradient(
-    135deg,
+  background: linear-gradient(135deg,
     rgba(255,255,255,0.05) 0%,
     rgba(255,255,255,0.00) 40%,
     rgba(255,255,255,0.06) 60%,
-    rgba(255,255,255,0.00) 100%
-  );
+    rgba(255,255,255,0.00) 100%);
 }
 
-/* Paper — ruled lines */
 .ppo--noise {
   background-image: repeating-linear-gradient(
-    180deg,
-    transparent,
-    transparent 18px,
-    rgba(0,0,0,0.06) 18px,
-    rgba(0,0,0,0.06) 19px
-  );
+    180deg, transparent, transparent 18px,
+    rgba(0,0,0,0.06) 18px, rgba(0,0,0,0.06) 19px);
 }
 
-/* Candy — polka dots */
 .ppo--dots {
   background-image: radial-gradient(circle, color-mix(in srgb, var(--accent, #d63384) 30%, transparent) 1.5px, transparent 1.5px);
   background-size: 14px 14px;
   opacity: 0.5;
 }
 
-/* Earth — subtle weave */
 .ppo--texture {
   background-image:
     repeating-linear-gradient(45deg,  rgba(61,43,31,0.04) 0px, rgba(61,43,31,0.04) 1px, transparent 1px, transparent 8px),
     repeating-linear-gradient(-45deg, rgba(61,43,31,0.04) 0px, rgba(61,43,31,0.04) 1px, transparent 1px, transparent 8px);
 }
 
-/* ─── Content (ppc) ─── */
+/* ─── Content ─── */
 
 .ppc {
   position: relative;
@@ -166,7 +154,6 @@
 }
 .ppc::-webkit-scrollbar { display: none; }
 
-/* Font variants */
 .ppc--mono    { font-family: 'Courier New', monospace; }
 .ppc--serif   { font-family: Georgia, 'Times New Roman', serif; }
 .ppc--rounded { font-family: 'Trebuchet MS', sans-serif; }
@@ -185,21 +172,9 @@
   overflow: hidden;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
+.ppc__avatar img  { width: 100%; height: 100%; object-fit: cover; }
+.ppc__avatar span { color: #fff; font-size: 20px; font-weight: 700; line-height: 1; }
 
-.ppc__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.ppc__avatar span {
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-/* Name */
 .ppc__name {
   font-size: 12.5px;
   font-weight: 700;
@@ -212,7 +187,6 @@
   transition: color 0.3s;
 }
 
-/* Bio */
 .ppc__bio {
   font-size: 9px;
   text-align: center;
@@ -226,7 +200,7 @@
   margin-bottom: 4px;
 }
 
-/* Links container */
+/* Links */
 .ppc__links {
   display: flex;
   flex-direction: column;
@@ -235,7 +209,6 @@
   margin-top: 4px;
 }
 
-/* Individual link */
 .ppc__link {
   width: 100%;
   padding: 6.5px 10px;
@@ -255,6 +228,160 @@
   padding: 16px 0;
 }
 
+/* Divider between links and blocks */
+.ppc__divider {
+  width: 80%;
+  height: 1px;
+  margin: 6px 0 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* Blocks container */
+.ppc__blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+/* ─── Text block ─── */
+.ppc__block-text {
+  width: 100%;
+  text-align: center;
+  padding: 2px 0;
+}
+
+.ppc__block-heading {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.ppc__block-body {
+  font-size: 8px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Image block ─── */
+.ppc__block-image {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ppc__block-image img {
+  width: 100%;
+  border-radius: 7px;
+  object-fit: cover;
+  max-height: 80px;
+  display: block;
+}
+
+.ppc__block-caption {
+  font-size: 7.5px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* ─── Video block ─── */
+.ppc__block-video {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ppc__block-video-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 7px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ppc__block-video-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 14px;
+  border-radius: 7px;
+}
+
+.ppc__block-video-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* ─── Newsletter block ─── */
+.ppc__block-newsletter {
+  width: 100%;
+  border-radius: 9px;
+  border: 1px solid;
+  padding: 8px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ppc__block-nl-heading {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.ppc__block-nl-sub {
+  font-size: 7.5px;
+  text-align: center;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+.ppc__block-nl-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.ppc__block-nl-input {
+  flex: 1;
+  font-size: 7px;
+  padding: 4px 6px;
+  border-radius: 100px;
+  border: 1px solid;
+  color: #aaa;
+  background: rgba(255,255,255,0.6);
+}
+
+.ppc__block-nl-btn {
+  font-size: 7px;
+  font-weight: 700;
+  padding: 4px 7px;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Footer */
 .ppc__footer {
   font-size: 7.5px;
@@ -262,6 +389,7 @@
   margin-top: auto;
   padding-top: 10px;
   letter-spacing: 0.02em;
+  flex-shrink: 0;
 }
 
 /* ─── Responsive ─── */

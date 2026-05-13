@@ -6,7 +6,7 @@ const testimonials = [
     handle: '@sofiareyes.co',
     avatar: 'S',
     color: '#e8b4b8',
-    text: 'I switched from Linktree to Vinelink and never looked back. My page looks so much more professional and my click rate went up by 40%. The templates are stunning.',
+    text: 'I switched from Linktree to Vinelink and never looked back. My page looks so much more professional, I started saving more money, and my click rate went up by 40%. The templates are stunning.',
     role: 'Fashion Creator • 82K followers'
   },
   {
@@ -14,7 +14,7 @@ const testimonials = [
     handle: '@marcusallen',
     avatar: 'M',
     color: '#b4d4e8',
-    text: 'Finally a link-in-bio tool that does not look generic. My audience actually compliments my Vinelink page. And at $4/mo I was paying way too much for Linktree before.',
+    text: 'Finally a link-in-bio tool that does not look generic. My audience actually compliments my Vinelink page. And for free for all features, I was paying way too much for Linktree before.',
     role: 'Fitness Coach • 45K followers'
   },
   {

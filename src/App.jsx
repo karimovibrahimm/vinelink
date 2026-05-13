@@ -10,6 +10,8 @@ import Analytics from './pages/Dashboard/Analytics'
 import Profile from './pages/Profile/Profile'
 import Onboarding from './pages/Onboarding/Onboarding'
 import Settings from './pages/Dashboard/Settings'
+import Blocks from './pages/Blocks/Block'
+import Subscribers from './pages/Subscribers/Subscribers'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import './App.css'
@@ -60,6 +62,8 @@ function App() {
           <Route path="/dashboard/appearance" element={<Appearance />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
           <Route path="/dashboard/settings" element={<Settings />} />
+          <Route path="/dashboard/blocks" element={<Blocks />} />
+          <Route path="/dashboard/subscribers" element={<Subscribers />} />
           <Route path="/:username" element={<Profile />} />
         </Routes>
       </div>

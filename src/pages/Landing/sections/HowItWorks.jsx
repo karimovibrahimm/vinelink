@@ -58,7 +58,7 @@ function HowItWorks() {
 
         <div className="howitworks__cta">
           <a href="/signup" className="howitworks__cta-btn">
-            Start for free — no card needed
+            All features for free — Start now
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>

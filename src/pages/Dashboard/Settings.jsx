@@ -123,6 +123,15 @@ function Settings() {
             </svg>
             Appearance
           </a>
+          <a href="/dashboard/blocks" className="dashboard__nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="8" height="8" rx="1"/>
+              <rect x="13" y="3" width="8" height="8" rx="1"/>
+              <rect x="3" y="13" width="8" height="8" rx="1"/>
+              <path d="M17 13v2m0 4v2m-2-4h2m2 0h2" strokeLinecap="round"/>
+            </svg>
+            Blocks
+          </a>
           <a href="/dashboard/analytics" className="dashboard__nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="20" x2="18" y2="10"/>
@@ -130,6 +139,15 @@ function Settings() {
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
             Analytics
+          </a>
+          <a href="/dashboard/subscribers" className="dashboard__nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Subscribers
           </a>
           <a href="/dashboard/settings" className="dashboard__nav-item dashboard__nav-item--active">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -146,7 +164,7 @@ function Settings() {
             </div>
             <div className="dashboard__profile-info">
               <div className="dashboard__profile-name">@{profile?.username}</div>
-              <div className="dashboard__profile-plan">Free plan</div>
+              <div className="dashboard__profile-plan">Premium Plan for Free!</div>
             </div>
           </div>
           <button className="dashboard__logout" onClick={handleLogout}>
@@ -173,36 +191,6 @@ function Settings() {
         {error && <div className="dashboard__error">{error}</div>}
         {saved && <div className="settings__success">✓ Changes saved successfully</div>}
 
-        {/* Plan */}
-        <div className="settings__section">
-          <h2 className="settings__section-title">Current Plan</h2>
-          <div className="settings__plan">
-            <div className="settings__plan-info">
-              <div className="settings__plan-name">Free Plan</div>
-              <div className="settings__plan-desc">5 links, basic themes, Vinelink subdomain</div>
-            </div>
-            <a href="#upgrade" className="settings__upgrade-btn" onClick={() => alert('Subscriptions Coming Soon!')}>
-              ⚡ Upgrade to Pro — $4/mo
-            </a>
-          </div>
-          <div className="settings__plan-features">
-            <div className="settings__plan-feature">
-              <span className="settings__feature-check">✓</span> Up to 5 links
-            </div>
-            <div className="settings__plan-feature">
-              <span className="settings__feature-check">✓</span> Basic themes
-            </div>
-            <div className="settings__plan-feature settings__plan-feature--locked">
-              <span className="settings__feature-lock">🔒</span> Custom domain
-            </div>
-            <div className="settings__plan-feature settings__plan-feature--locked">
-              <span className="settings__feature-lock">🔒</span> Remove Vinelink branding
-            </div>
-            <div className="settings__plan-feature settings__plan-feature--locked">
-              <span className="settings__feature-lock">🔒</span> Advanced analytics
-            </div>
-          </div>
-        </div>
 
         {/* Account */}
         <div className="settings__section">
@@ -305,6 +293,15 @@ function Settings() {
           </svg>
           <span>Links</span>
         </a>
+        <a href="/dashboard/blocks" className="dashboard__mobile-nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="8" height="8" rx="1"/>
+            <rect x="13" y="3" width="8" height="8" rx="1"/>
+            <rect x="3" y="13" width="8" height="8" rx="1"/>
+            <path d="M17 13v2m0 4v2m-2-4h2m2 0h2"/>
+          </svg>
+          <span>Blocks</span>
+        </a>
         <a href="/dashboard/appearance" className="dashboard__mobile-nav-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
@@ -319,6 +316,15 @@ function Settings() {
             <line x1="6" y1="20" x2="6" y2="14"/>
           </svg>
           <span>Analytics</span>
+        </a>
+        <a href="/dashboard/subscribers" className="dashboard__mobile-nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>Subs</span>
         </a>
         <a href="/dashboard/settings" className="dashboard__mobile-nav-item dashboard__mobile-nav-item--active">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

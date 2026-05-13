@@ -73,7 +73,6 @@ function FooterCTA() {
                 <h4 className="footer__col-title">Product</h4>
                 <ul>
                   <li><a href="#features">Features</a></li>
-                  <li><a href="#pricing">Pricing</a></li>
                   <li><a href="#examples">Examples</a></li>
                   <li><a href="/signup">Get started</a></li>
                 </ul>
