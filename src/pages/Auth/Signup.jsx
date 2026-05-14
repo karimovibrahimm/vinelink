@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import './Auth.css'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function Signup() {
   const [form, setForm] = useState({ username: '', email: '', password: '' })
@@ -8,13 +10,74 @@ function Signup() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  const [usernameChecking, setUsernameChecking] = useState(false)
+  const [usernameTaken, setUsernameTaken]       = useState(false)
+
+  const [emailChecking, setEmailChecking] = useState(false)
+  const [emailTaken, setEmailTaken]       = useState(false)
+
+  const usernameFormatError = (() => {
+    const u = form.username
+    if (!u) return ''
+    if (u.length < 3) return 'At least 3 characters'
+    if (u.length > 32) return 'Max 32 characters'
+    if (!/^[a-z0-9-]+$/.test(u)) return 'Only lowercase letters, numbers, and hyphens'
+    if (/^-|-$/.test(u)) return 'Cannot start or end with a hyphen'
+    if (/--/.test(u)) return 'No consecutive hyphens'
+    return ''
+  })()
+
+  const usernameError = usernameFormatError || (usernameTaken ? 'This username is already taken' : '')
+  const emailError    = emailTaken ? 'This email is already registered' : ''
+
+  // debounced username availability check
+  useEffect(() => {
+    setUsernameTaken(false)
+    if (!form.username || usernameFormatError) return
+    setUsernameChecking(true)
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', form.username)
+        .maybeSingle()
+      setUsernameTaken(!!data)
+      setUsernameChecking(false)
+    }, 500)
+    return () => clearTimeout(t)
+  }, [form.username, usernameFormatError])
+
+  // debounced email availability check
+  useEffect(() => {
+    setEmailTaken(false)
+    if (!form.email || !EMAIL_RE.test(form.email)) return
+    setEmailChecking(true)
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', form.email)
+          .maybeSingle()
+        setEmailTaken(!!data)
+      } catch {
+        // profiles table has no email column — fall back to submit-time check
+      }
+      setEmailChecking(false)
+    }, 500)
+    return () => clearTimeout(t)
+  }, [form.email])
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    const val = name === 'username' ? value.toLowerCase().replace(/[^a-z0-9-]/g, '') : value
+    setForm({ ...form, [name]: val })
     setError('')
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (usernameError || emailError || usernameChecking || emailChecking) return
     setLoading(true)
     setError('')
 
@@ -27,13 +90,16 @@ function Signup() {
     const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: {
-        data: { username: form.username }
-      }
+      options: { data: { username: form.username } }
     })
 
     if (error) {
-      setError(error.message)
+      const msg = error.message.toLowerCase()
+      if (msg.includes('already registered') || msg.includes('already in use') || msg.includes('email')) {
+        setEmailTaken(true)
+      } else {
+        setError(error.message)
+      }
     } else {
       setSuccess(true)
     }
@@ -41,10 +107,23 @@ function Signup() {
     setLoading(false)
   }
 
+  const usernameWrapperClass = [
+    'auth__input-wrapper',
+    form.username && usernameError      ? 'auth__input-wrapper--error' : '',
+    form.username && !usernameError && !usernameChecking ? 'auth__input-wrapper--valid' : '',
+  ].filter(Boolean).join(' ')
+
+  const emailWrapperClass = [
+    'auth__input',
+    emailError                              ? 'auth__input--error' : '',
+    form.email && EMAIL_RE.test(form.email) && !emailError && !emailChecking ? 'auth__input--valid' : '',
+  ].filter(Boolean).join(' ')
+
+  const canSubmit = !loading && !usernameError && !emailError && !usernameChecking && !emailChecking && form.username && form.email && form.password
+
   return (
     <div className="auth">
 
-      {/* Left - Form */}
       <div className="auth__form-side">
         <div className="auth__form-wrapper">
 
@@ -75,9 +154,11 @@ function Signup() {
               {error && <div className="auth__error">{error}</div>}
 
               <form className="auth__form" onSubmit={handleSubmit}>
+
+                {/* Username */}
                 <div className="auth__field">
                   <label className="auth__label">Username</label>
-                  <div className="auth__input-wrapper">
+                  <div className={usernameWrapperClass}>
                     <input
                       className="auth__input auth__input--subdomain"
                       type="text"
@@ -89,12 +170,22 @@ function Signup() {
                     />
                     <span className="auth__input-suffix">.vinelink.xyz</span>
                   </div>
+                  {form.username && usernameChecking && (
+                    <span className="auth__field-checking">Checking availability...</span>
+                  )}
+                  {form.username && !usernameChecking && usernameError && (
+                    <span className="auth__field-error">{usernameError}</span>
+                  )}
+                  {form.username && !usernameChecking && !usernameError && (
+                    <span className="auth__field-valid">✓ {form.username}.vinelink.xyz is available</span>
+                  )}
                 </div>
 
+                {/* Email */}
                 <div className="auth__field">
                   <label className="auth__label">Email address</label>
                   <input
-                    className="auth__input"
+                    className={emailWrapperClass}
                     type="email"
                     name="email"
                     placeholder="you@example.com"
@@ -102,8 +193,15 @@ function Signup() {
                     onChange={handleChange}
                     required
                   />
+                  {form.email && EMAIL_RE.test(form.email) && emailChecking && (
+                    <span className="auth__field-checking">Checking email...</span>
+                  )}
+                  {form.email && !emailChecking && emailError && (
+                    <span className="auth__field-error">{emailError}</span>
+                  )}
                 </div>
 
+                {/* Password */}
                 <div className="auth__field">
                   <label className="auth__label">Password</label>
                   <input
@@ -117,8 +215,8 @@ function Signup() {
                   />
                 </div>
 
-                <button className="auth__btn" type="submit" disabled={loading}>
-                  {loading ? 'Creating account...' : 'Create free account'}
+                <button className="auth__btn" type="submit" disabled={!canSubmit}>
+                  {loading ? 'Creating account...' : usernameChecking || emailChecking ? 'Checking...' : 'Create free account'}
                 </button>
               </form>
 
@@ -135,7 +233,6 @@ function Signup() {
         </div>
       </div>
 
-      {/* Right - Visual */}
       <div className="auth__visual-side">
         <div className="auth__visual-content">
           <div className="auth__visual-card">

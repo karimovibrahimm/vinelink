@@ -122,6 +122,48 @@
   border-right: 1.5px solid var(--color-background-dark);
 }
 
+.auth__input-wrapper--error {
+  border-color: var(--color-error) !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.08) !important;
+}
+
+.auth__input-wrapper--valid {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.08) !important;
+}
+
+.auth__field-error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  margin-top: 5px;
+  display: block;
+}
+
+.auth__field-valid {
+  font-size: var(--font-size-xs);
+  color: #16a34a;
+  margin-top: 5px;
+  display: block;
+  font-weight: 500;
+}
+
+.auth__field-checking {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 5px;
+  display: block;
+}
+
+.auth__input--error {
+  border-color: var(--color-error) !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.08) !important;
+}
+
+.auth__input--valid {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.08) !important;
+}
+
 .auth__input-suffix {
   padding: 14px 12px;
   font-size: var(--font-size-sm);
