@@ -301,7 +301,7 @@ function Dashboard() {
             <p className="dashboard__subtitle">Drag to reorder. Toggle to show or hide.</p>
           </div>
           <div className="dashboard__header-actions">
-            <a href={`/${profile?.username}`} target="_blank" rel="noreferrer" className="dashboard__preview-btn">
+            <a href={`https://${profile?.username}.vinelink.xyz`} target="_blank" rel="noreferrer" className="dashboard__preview-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
