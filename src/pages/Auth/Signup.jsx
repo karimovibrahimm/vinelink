@@ -78,9 +78,8 @@ function Signup() {
                 <div className="auth__field">
                   <label className="auth__label">Username</label>
                   <div className="auth__input-wrapper">
-                    <span className="auth__input-prefix">vinelink.com/</span>
                     <input
-                      className="auth__input auth__input--prefixed"
+                      className="auth__input auth__input--subdomain"
                       type="text"
                       name="username"
                       placeholder="yourname"
@@ -88,6 +87,7 @@ function Signup() {
                       onChange={handleChange}
                       required
                     />
+                    <span className="auth__input-suffix">.vinelink.xyz</span>
                   </div>
                 </div>
 
@@ -149,7 +149,7 @@ function Signup() {
               <div className="auth__mock-link">🛍️ Shop my favorites</div>
               <div className="auth__mock-link">📩 Work with me</div>
             </div>
-            <div className="auth__mock-url">vinelink.com/yourname</div>
+            <div className="auth__mock-url">yourname.vinelink.xyz</div>
           </div>
           <h2 className="auth__visual-title">Your page.<br />Your way.</h2>
           <p className="auth__visual-subtitle">Beautiful, fast, and yours in 2 minutes.</p>

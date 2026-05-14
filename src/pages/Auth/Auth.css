@@ -112,16 +112,25 @@
 }
 
 .auth__input-prefix {
-  padding: 0 12px;
+  padding: 14px 12px;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   background-color: var(--color-background-dark);
-  height: 100%;
   display: flex;
   align-items: center;
   white-space: nowrap;
   border-right: 1.5px solid var(--color-background-dark);
+}
+
+.auth__input-suffix {
   padding: 14px 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background-color: var(--color-background-dark);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  border-left: 1.5px solid var(--color-background-dark);
 }
 
 .auth__input {
@@ -140,14 +149,17 @@
   box-shadow: 0 0 0 3px rgba(26,58,42,0.08);
 }
 
-.auth__input--prefixed {
+.auth__input--prefixed,
+.auth__input--subdomain {
   border: none;
   border-radius: 0;
   padding: 14px 12px;
   flex: 1;
+  min-width: 0;
 }
 
-.auth__input--prefixed:focus {
+.auth__input--prefixed:focus,
+.auth__input--subdomain:focus {
   box-shadow: none;
 }
 

@@ -1,21 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { getThemeById } from '../../lib/themes'
 import './Onboarding.css'
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+
+const LOADING_STEPS = [
+  'Analyzing your content...',
+  'Crafting your bio...',
+  'Selecting the perfect theme...',
+  'Building your links...',
+]
 
 function Onboarding({ user, profile, onComplete }) {
   const [step, setStep] = useState(1)
   const [socialInput, setSocialInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    if (!loading) return
+    setLoadingStep(0)
+    const timers = LOADING_STEPS.map((_, i) =>
+      setTimeout(() => setLoadingStep(i), i * 950)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [loading])
+
   const handleSkip = async () => {
-    await supabase
-      .from('profiles')
-      .update({ onboarding_done: true })
-      .eq('id', user.id)
+    await supabase.from('profiles').update({ onboarding_done: true }).eq('id', user.id)
     onComplete()
   }
 
@@ -31,29 +46,22 @@ function Onboarding({ user, profile, onComplete }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `You are helping set up a link-in-bio page. Based on this social media info: "${socialInput}", generate a profile for them.
+            contents: [{
+              parts: [{
+                text: `You are helping set up a link-in-bio page. Based on this info: "${socialInput}", generate a profile.
 
-Respond ONLY with a valid JSON object, no markdown, no explanation, no code blocks:
+Respond ONLY with valid JSON, no markdown or explanation:
 {
-  "full_name": "their name or username cleaned up",
-  "bio": "a punchy 1-2 sentence bio under 100 chars that fits their niche",
-  "theme": "one of: default, ocean, rose, midnight, sand, slate — pick based on their vibe",
+  "full_name": "their name or handle cleaned up",
+  "bio": "punchy 1-2 sentence bio under 120 chars that fits their niche",
+  "theme": "pick the best fit from: forest, ocean, rose, midnight, sand, slate, neon, aurora, paper, glass, candy, earth, sunset, lavender",
   "links": [
-    { "title": "link title", "url": "the actual url they pasted or inferred" }
+    { "title": "short descriptive label", "url": "full url including https://" }
   ]
 }`
-                  }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1000
-            }
+              }]
+            }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
           })
         }
       )
@@ -97,16 +105,32 @@ Respond ONLY with a valid JSON object, no markdown, no explanation, no code bloc
     onComplete()
   }
 
-  const themes = {
-    default:  { primary: '#1a3a2a', accent: '#c9a84c', bg: '#f7f5f0' },
-    ocean:    { primary: '#1a2e4a', accent: '#4a9eca', bg: '#f0f5fa' },
-    rose:     { primary: '#4a1a2e', accent: '#ca4a7a', bg: '#faf0f3' },
-    midnight: { primary: '#1a1a2e', accent: '#7a6aca', bg: '#f0f0fa' },
-    sand:     { primary: '#3a2e1a', accent: '#ca9a4a', bg: '#faf5f0' },
-    slate:    { primary: '#1a2a3a', accent: '#4acaca', bg: '#f0f5f5' },
+  const activeTheme = getThemeById(result?.theme)
+
+  const getPreviewBg = () => {
+    const t = activeTheme
+    if (t.id === 'aurora')   return 'linear-gradient(160deg, #0a1628 0%, #0d2040 100%)'
+    if (t.id === 'glass')    return 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
+    if (t.id === 'neon')     return '#0a0a0a'
+    if (t.id === 'midnight') return 'radial-gradient(ellipse at 50% 0%, rgba(122,106,202,0.3) 0%, transparent 60%), #0d0d1a'
+    return `linear-gradient(160deg, ${t.bgGradient} 0%, ${t.bg} 60%)`
   }
 
-  const activeTheme = result ? (themes[result.theme] || themes.default) : themes.default
+  const getLinkStyle = (i) => {
+    const t = activeTheme
+    if (t.id === 'neon')
+      return { background: i === 0 ? 'rgba(0,255,136,0.15)' : 'transparent', border: `1px solid ${i === 0 ? '#00ff88' : 'rgba(0,255,136,0.2)'}`, color: '#00ff88' }
+    if (t.id === 'aurora' || t.id === 'glass')
+      return { background: i === 0 ? 'rgba(100,255,218,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${i === 0 ? 'rgba(100,255,218,0.4)' : 'rgba(255,255,255,0.1)'}`, color: i === 0 ? t.accent : '#fff' }
+    if (t.id === 'midnight')
+      return { background: i === 0 ? 'rgba(122,106,202,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${i === 0 ? 'rgba(122,106,202,0.6)' : 'rgba(255,255,255,0.1)'}`, color: '#fff' }
+    if (t.id === 'paper')
+      return { background: i === 0 ? '#c0392b' : '#fffef9', border: `1px solid ${i === 0 ? '#c0392b' : '#d4c9b0'}`, color: i === 0 ? '#fff' : '#2c2c2c', borderRadius: '4px' }
+    if (t.id === 'candy')
+      return { background: i === 0 ? 'linear-gradient(135deg, #d63384, #fd7e14)' : '#fff', border: `1px solid ${i === 0 ? 'transparent' : '#f8b4d9'}`, color: i === 0 ? '#fff' : '#d63384', borderRadius: '100px' }
+    const tc = t.textColor || t.primary
+    return { backgroundColor: i === 0 ? t.primary : (t.cardBg || '#fff'), borderColor: i === 0 ? t.primary : (t.borderColor || `${t.primary}22`), color: i === 0 ? '#fff' : tc }
+  }
 
   return (
     <div className="onboarding">
@@ -122,12 +146,18 @@ Respond ONLY with a valid JSON object, no markdown, no explanation, no code bloc
           Vinelink
         </a>
 
+        <div className="onboarding__steps">
+          <div className={`onboarding__step-dot ${step >= 1 ? 'onboarding__step-dot--active' : ''}`} />
+          <div className="onboarding__step-line" />
+          <div className={`onboarding__step-dot ${step >= 2 ? 'onboarding__step-dot--active' : ''}`} />
+        </div>
+
         {step === 1 && (
           <div className="onboarding__step">
             <div className="onboarding__badge">✨ AI Setup</div>
             <h1 className="onboarding__title">Let AI build your page</h1>
             <p className="onboarding__subtitle">
-              Paste your Instagram, YouTube, TikTok, or any social links below. Our AI will build your entire Vinelink page in seconds.
+              Paste your social links and a short description. Our AI will build your entire Vinelink page in seconds.
             </p>
 
             <textarea
@@ -140,17 +170,22 @@ Respond ONLY with a valid JSON object, no markdown, no explanation, no code bloc
 
             {error && <div className="onboarding__error">{error}</div>}
 
-            <button
-              className="onboarding__btn"
-              onClick={handleGenerate}
-              disabled={loading || !socialInput.trim()}
-            >
-              {loading ? (
-                <><span className="onboarding__spinner"></span> Building your page...</>
-              ) : (
-                '✨ Build my Vinelink page'
-              )}
-            </button>
+            {loading ? (
+              <div className="onboarding__loading-steps">
+                {LOADING_STEPS.map((s, i) => (
+                  <div key={i} className={`onboarding__loading-step ${i < loadingStep ? 'onboarding__loading-step--done' : ''} ${i === loadingStep ? 'onboarding__loading-step--active' : ''}`}>
+                    <div className="onboarding__loading-icon">
+                      {i < loadingStep ? '✓' : i === loadingStep ? <span className="onboarding__spinner" /> : '·'}
+                    </div>
+                    {s}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <button className="onboarding__btn" onClick={handleGenerate} disabled={!socialInput.trim()}>
+                ✨ Build my Vinelink page
+              </button>
+            )}
 
             <button className="onboarding__skip" onClick={handleSkip}>
               Skip and set up manually →
@@ -161,58 +196,39 @@ Respond ONLY with a valid JSON object, no markdown, no explanation, no code bloc
         {step === 2 && result && (
           <div className="onboarding__step">
             <div className="onboarding__badge">🎉 Your page is ready</div>
-            <h1 className="onboarding__title">Looking good, {result.full_name}!</h1>
+            <h1 className="onboarding__title">Looking good!</h1>
             <p className="onboarding__subtitle">Here's what AI created for you. You can edit everything after.</p>
 
-            <div
-              className="onboarding__preview"
-              style={{ background: `linear-gradient(160deg, ${activeTheme.bg} 0%, #fff 100%)` }}
-            >
+            <div className="onboarding__preview" style={{ background: getPreviewBg() }}>
               <div
                 className="onboarding__preview-avatar"
                 style={{ background: `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})` }}
               >
                 {result.full_name?.[0]?.toUpperCase()}
               </div>
-              <div className="onboarding__preview-name" style={{ color: activeTheme.primary }}>
+              <div className="onboarding__preview-name" style={{ color: activeTheme.textColor || activeTheme.primary }}>
                 {result.full_name}
               </div>
-              <div className="onboarding__preview-bio">{result.bio}</div>
+              <div className="onboarding__preview-bio" style={{ color: activeTheme.subtextColor || (activeTheme.style === 'dark' ? 'rgba(255,255,255,0.6)' : '#666') }}>
+                {result.bio}
+              </div>
               <div className="onboarding__preview-links">
                 {result.links?.map((link, i) => (
-                  <div
-                    key={i}
-                    className="onboarding__preview-link"
-                    style={i === 0 ? {
-                      background: activeTheme.primary,
-                      color: '#fff',
-                      borderColor: activeTheme.primary
-                    } : {
-                      borderColor: `${activeTheme.primary}22`,
-                      color: activeTheme.primary
-                    }}
-                  >
+                  <div key={i} className="onboarding__preview-link" style={getLinkStyle(i)}>
                     {link.title}
                   </div>
                 ))}
               </div>
-              <div className="onboarding__preview-theme">
-                Theme: <strong>{result.theme}</strong>
+              <div className="onboarding__preview-theme" style={{ color: activeTheme.subtextColor || (activeTheme.style === 'dark' ? 'rgba(255,255,255,0.4)' : '#999') }}>
+                Theme: <strong>{activeTheme.name}</strong>
               </div>
             </div>
 
             <div className="onboarding__actions">
-              <button
-                className="onboarding__btn"
-                onClick={handleApply}
-                disabled={loading}
-              >
+              <button className="onboarding__btn" onClick={handleApply} disabled={loading}>
                 {loading ? 'Applying...' : '🚀 Apply and go to dashboard'}
               </button>
-              <button
-                className="onboarding__skip"
-                onClick={() => { setStep(1); setResult(null) }}
-              >
+              <button className="onboarding__skip" onClick={() => { setStep(1); setResult(null) }}>
                 ← Try again
               </button>
             </div>
