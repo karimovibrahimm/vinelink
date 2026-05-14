@@ -13,8 +13,7 @@ function Signup() {
   const [usernameChecking, setUsernameChecking] = useState(false)
   const [usernameTaken, setUsernameTaken]       = useState(false)
 
-  const [emailChecking, setEmailChecking] = useState(false)
-  const [emailTaken, setEmailTaken]       = useState(false)
+  const [emailTaken, setEmailTaken] = useState(false)
 
   const usernameFormatError = (() => {
     const u = form.username
@@ -47,26 +46,8 @@ function Signup() {
     return () => clearTimeout(t)
   }, [form.username, usernameFormatError])
 
-  // debounced email availability check
-  useEffect(() => {
-    setEmailTaken(false)
-    if (!form.email || !EMAIL_RE.test(form.email)) return
-    setEmailChecking(true)
-    const t = setTimeout(async () => {
-      try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', form.email)
-          .maybeSingle()
-        setEmailTaken(!!data)
-      } catch {
-        // profiles table has no email column — fall back to submit-time check
-      }
-      setEmailChecking(false)
-    }, 500)
-    return () => clearTimeout(t)
-  }, [form.email])
+  // reset email error when user edits the email field
+  useEffect(() => { setEmailTaken(false) }, [form.email])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -77,7 +58,7 @@ function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (usernameError || emailError || usernameChecking || emailChecking) return
+    if (usernameError || emailError || usernameChecking) return
     setLoading(true)
     setError('')
 
@@ -87,19 +68,17 @@ function Signup() {
       return
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: { data: { username: form.username } }
     })
 
     if (error) {
-      const msg = error.message.toLowerCase()
-      if (msg.includes('already registered') || msg.includes('already in use') || msg.includes('email')) {
-        setEmailTaken(true)
-      } else {
-        setError(error.message)
-      }
+      setError(error.message)
+    } else if (data?.user?.identities?.length === 0) {
+      // Supabase silently "succeeds" for existing emails — empty identities means already registered
+      setEmailTaken(true)
     } else {
       setSuccess(true)
     }
@@ -115,11 +94,10 @@ function Signup() {
 
   const emailWrapperClass = [
     'auth__input',
-    emailError                              ? 'auth__input--error' : '',
-    form.email && EMAIL_RE.test(form.email) && !emailError && !emailChecking ? 'auth__input--valid' : '',
+    emailError ? 'auth__input--error' : '',
   ].filter(Boolean).join(' ')
 
-  const canSubmit = !loading && !usernameError && !emailError && !usernameChecking && !emailChecking && form.username && form.email && form.password
+  const canSubmit = !loading && !usernameError && !emailError && !usernameChecking && form.username && form.email && form.password
 
   return (
     <div className="auth">
@@ -193,10 +171,7 @@ function Signup() {
                     onChange={handleChange}
                     required
                   />
-                  {form.email && EMAIL_RE.test(form.email) && emailChecking && (
-                    <span className="auth__field-checking">Checking email...</span>
-                  )}
-                  {form.email && !emailChecking && emailError && (
+                  {emailError && (
                     <span className="auth__field-error">{emailError}</span>
                   )}
                 </div>
@@ -216,7 +191,7 @@ function Signup() {
                 </div>
 
                 <button className="auth__btn" type="submit" disabled={!canSubmit}>
-                  {loading ? 'Creating account...' : usernameChecking || emailChecking ? 'Checking...' : 'Create free account'}
+                  {loading ? 'Creating account...' : usernameChecking ? 'Checking...' : 'Create free account'}
                 </button>
               </form>
 
