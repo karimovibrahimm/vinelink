@@ -264,12 +264,7 @@ function Profile({ customUsername }) {
                 href={link.url}
                 target="_blank"
                 rel="noreferrer noopener"
-                onClick={(e) => {
-                  e.preventDefault()
-                  trackLinkClick(link.id)
-                  const newTab = window.open(link.url, '_blank', 'noopener,noreferrer')
-                  if (!newTab) window.location.href = link.url
-                }}
+                onClick={() => trackLinkClick(link.id)}
               >
                 <span className="profile__link-title">{link.title}</span>
                 <svg className="profile__link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -293,7 +288,7 @@ function Profile({ customUsername }) {
 
         {/* Footer */}
         <div className="profile__footer">
-          <a href="/" className="profile__powered" style={isDark ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' } : {}}>
+          <a href="https://vinelink.xyz" className="profile__powered" style={isDark ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' } : {}}>
             <svg width="14" height="14" viewBox="0 0 28 28" fill="none">
               <path d="M14 4 C14 4 8 8 8 14 C8 18 10 21 14 24 C18 21 20 18 20 14 C20 8 14 4 14 4Z" fill="#c9a84c"/>
               <path d="M14 24 C14 24 10 20 8 16 C10 17 13 17 14 24Z" fill="#1a3a2a"/>
