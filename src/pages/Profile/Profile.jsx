@@ -156,9 +156,25 @@ function Profile({ customUsername }) {
   }
 
   const handleLinkClick = async (link) => {
-    await supabase.from('link_clicks').insert({ link_id: link.id, user_id: profile.id, clicked_at: new Date().toISOString() })
-    window.open(link.url, '_blank', 'noreferrer')
-  }
+    // 1. Open a blank window IMMEDIATELY (Safari sees this as user-triggered)
+    const newWindow = window.open('', '_blank', 'noreferrer');
+
+    // 2. Track the click in Supabase in the background
+    try {
+      await supabase.from('link_clicks').insert({
+        link_id: link.id,
+        user_id: profile.id,
+        clicked_at: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Click tracking failed", error);
+    }
+
+    // 3. Set the URL of the already-opened window
+    if (newWindow) {
+      newWindow.location.href = link.url;
+    }
+  };
 
   const handleBlockLinkClick = async (block) => {
     const url = block.data?.url
