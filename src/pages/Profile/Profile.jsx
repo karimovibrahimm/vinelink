@@ -122,8 +122,14 @@ function BlockNewsletter({ block, userId, theme }) {
 }
 
 // ─── Main Profile component ───────────────────────────────────────────────────
-function Profile() {
-  const { username } = useParams()
+
+// THE FIX: Added customUsername prop here to accept the subdomain injection
+function Profile({ customUsername }) {
+  const { username: paramUsername } = useParams()
+  
+  // THE FIX: Use the subdomain if it exists, otherwise fall back to standard URL path
+  const username = customUsername || paramUsername
+
   const [profile, setProfile] = useState(null)
   const [links, setLinks]     = useState([])
   const [blocks, setBlocks]   = useState([])

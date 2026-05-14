@@ -49,6 +49,30 @@ function OnboardingWrapper() {
 }
 
 function App() {
+  const [subdomain, setSubdomain] = useState(null)
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    const host = window.location.hostname
+    const parts = host.split('.')
+    
+    // Check if there is a subdomain (e.g., ibrahim.vinelink.xyz has 3 parts)
+    // We ignore 'www' so the main landing page still works.
+    if (parts.length >= 3 && parts[0] !== 'www') {
+      setSubdomain(parts[0])
+    }
+    setChecking(false)
+  }, [])
+
+  if (checking) return null
+
+  // THE HIJACK: If a subdomain exists, ONLY render the Profile.
+  // We pass it as a custom prop so Profile knows who to look for.
+  if (subdomain) {
+    return <Profile customUsername={subdomain} />
+  }
+
+  // Otherwise, render the standard application routing.
   return (
     <BrowserRouter>
       <div className="app">
