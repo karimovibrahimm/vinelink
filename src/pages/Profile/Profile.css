@@ -117,14 +117,17 @@
   text-align: left;
 }
 
-.profile__link:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: #c8dcd0;
+@media (hover: hover) {
+  .profile__link:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: #c8dcd0;
+  }
 }
 
 .profile__link:active {
-  transform: translateY(0);
+  transform: scale(0.97);
+  box-shadow: none;
 }
 
 .profile__link--featured {

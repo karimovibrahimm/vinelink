@@ -15,20 +15,27 @@ export default function PhonePreview({ profile, links, blocks, themeObj }) {
   const activeBlocks = blocks?.filter(b => b.active) || []
   const isDark = t.style === 'dark'
 
-  const screenBg = `linear-gradient(180deg, ${t.bg} 0%, ${t.bgGradient} 100%)`
-
-  const primaryLinkStyle = {
-    background: isDark ? t.accent : t.primary,
-    color: isDark ? t.bg : '#ffffff',
-    border: '1.5px solid transparent',
-    boxShadow: isDark ? `0 0 10px ${t.accent}55` : '0 2px 8px rgba(0,0,0,0.15)',
+  const getScreenBg = () => {
+    if (t.id === 'aurora')   return 'radial-gradient(ellipse at 20% 50%, rgba(100,255,218,0.15) 0%, transparent 50%), linear-gradient(160deg, #0a1628 0%, #0d2040 100%)'
+    if (t.id === 'glass')    return 'linear-gradient(135deg, #16213e 0%, #0f3460 50%, #1a1a2e 100%)'
+    if (t.id === 'neon')     return '#0a0a0a'
+    if (t.id === 'midnight') return 'radial-gradient(ellipse at 50% 0%, rgba(122,106,202,0.3) 0%, transparent 60%), #0d0d1a'
+    return `linear-gradient(160deg, ${t.bgGradient} 0%, ${t.bg} 60%)`
   }
 
-  const secondaryLinkStyle = {
-    background: t.cardBg || '#fff',
-    color: t.textColor || t.primary,
-    border: `1.5px solid ${t.borderColor || t.primary + '22'}`,
-    boxShadow: isDark ? `inset 0 0 0 1px ${t.accent}22` : 'none',
+  const getPreviewLinkStyle = (index) => {
+    if (t.id === 'neon')
+      return { background: index === 0 ? 'rgba(0,255,136,0.15)' : 'transparent', border: `1px solid ${index === 0 ? '#00ff88' : 'rgba(0,255,136,0.2)'}`, color: '#00ff88', boxShadow: index === 0 ? '0 0 20px rgba(0,255,136,0.3)' : 'none' }
+    if (t.id === 'aurora' || t.id === 'glass')
+      return { background: index === 0 ? 'rgba(100,255,218,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${index === 0 ? 'rgba(100,255,218,0.4)' : 'rgba(255,255,255,0.1)'}`, color: index === 0 ? t.accent : '#ffffff', backdropFilter: 'blur(10px)' }
+    if (t.id === 'midnight')
+      return { background: index === 0 ? 'rgba(122,106,202,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${index === 0 ? 'rgba(122,106,202,0.6)' : 'rgba(255,255,255,0.1)'}`, color: index === 0 ? '#fff' : 'rgba(255,255,255,0.8)', boxShadow: index === 0 ? '0 0 30px rgba(122,106,202,0.3)' : 'none' }
+    if (t.id === 'paper')
+      return { background: index === 0 ? '#c0392b' : '#fffef9', border: `2px solid ${index === 0 ? '#c0392b' : '#d4c9b0'}`, color: index === 0 ? '#ffffff' : '#2c2c2c', borderRadius: '4px', boxShadow: '2px 2px 0px rgba(0,0,0,0.1)' }
+    if (t.id === 'candy')
+      return { background: index === 0 ? 'linear-gradient(135deg, #d63384, #fd7e14)' : '#ffffff', border: `2px solid ${index === 0 ? 'transparent' : '#f8b4d9'}`, color: index === 0 ? '#ffffff' : '#d63384', boxShadow: index === 0 ? '0 4px 15px rgba(214,51,132,0.4)' : 'none', borderRadius: '100px' }
+    const textColor = t.textColor || t.primary
+    return { backgroundColor: index === 0 ? t.primary : (t.cardBg || '#fff'), borderColor: index === 0 ? t.primary : (t.borderColor || `${t.primary}22`), color: index === 0 ? '#ffffff' : textColor }
   }
 
   const nameColor    = t.textColor    || t.primary
@@ -41,7 +48,7 @@ export default function PhonePreview({ profile, links, blocks, themeObj }) {
 
     if (type === 'link') {
       return (
-        <div key={block.id} className="ppc__link" style={primaryLinkStyle}>
+        <div key={block.id} className="ppc__link" style={getPreviewLinkStyle(0)}>
           {data.title || 'Link'}
         </div>
       )
@@ -121,7 +128,7 @@ export default function PhonePreview({ profile, links, blocks, themeObj }) {
       >
         <div className="phone-preview__notch" style={{ background: isDark ? t.accent : t.primary }} />
 
-        <div className="phone-preview__screen" style={{ background: screenBg }}>
+        <div className="phone-preview__screen" style={{ background: getScreenBg() }}>
 
           {t.pattern === 'stars'   && <div className="ppo ppo--stars" />}
           {t.pattern === 'grid'    && <div className="ppo ppo--grid"    style={{ '--neon':   t.accent }} />}
@@ -159,7 +166,7 @@ export default function PhonePreview({ profile, links, blocks, themeObj }) {
             {activeLinks.length > 0 && (
               <div className="ppc__links">
                 {activeLinks.slice(0, 4).map((link, i) => (
-                  <div key={link.id} className="ppc__link" style={i === 0 ? primaryLinkStyle : secondaryLinkStyle}>
+                  <div key={link.id} className="ppc__link" style={getPreviewLinkStyle(i)}>
                     {link.title}
                   </div>
                 ))}

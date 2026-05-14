@@ -78,6 +78,7 @@ function Dashboard() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [links, setLinks] = useState([])
+  const [blocks, setBlocks] = useState([])
   const [loading, setLoading] = useState(true)
   const [addingLink, setAddingLink] = useState(false)
   const [editingLink, setEditingLink] = useState(null)
@@ -107,6 +108,7 @@ function Dashboard() {
     }
     await getProfile(user.id)
     await getLinks(user.id)
+    await getBlocks(user.id)
     setLoading(false)
   }
 
@@ -118,6 +120,11 @@ function Dashboard() {
   const getLinks = async (userId) => {
     const { data } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
     if (data) setLinks(data)
+  }
+
+  const getBlocks = async (userId) => {
+    const { data } = await supabase.from('blocks').select('*').eq('user_id', userId).order('position', { ascending: true })
+    if (data) setBlocks(data)
   }
 
   const handleDragEnd = async (event) => {
@@ -199,6 +206,10 @@ function Dashboard() {
       </div>
     )
   }
+
+  // Only pass active links and blocks to preview (matches what public page shows)
+  const activeLinks = links.filter(l => l.active)
+  const activeBlocks = blocks.filter(b => b.active)
 
   return (
     <div className="dashboard">
@@ -365,7 +376,13 @@ function Dashboard() {
         </div>
       </main>
 
-      <PhonePreview profile={profile} links={links} themeObj={getThemeById(profile?.theme)} />
+      {/* Pass both activeLinks and activeBlocks so preview matches public page */}
+      <PhonePreview
+        profile={profile}
+        links={activeLinks}
+        blocks={activeBlocks}
+        themeObj={getThemeById(profile?.theme)}
+      />
 
       <nav className="dashboard__mobile-nav">
         <a href="/dashboard" className="dashboard__mobile-nav-item dashboard__mobile-nav-item--active">
@@ -423,4 +440,4 @@ function Dashboard() {
   )
 }
 
-export default Dashboard
+export default Dashboard;

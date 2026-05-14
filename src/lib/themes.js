@@ -154,6 +154,34 @@ export const themes = [
     font: 'system',
     style: 'warm',
     borderColor: '#d4b896'
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset',
+    primary: '#e85d04',
+    accent: '#faa307',
+    bg: '#03071e',
+    bgGradient: '#370617',
+    cardBg: 'rgba(232,93,4,0.12)',
+    pattern: 'none',
+    font: 'system',
+    style: 'dark',
+    textColor: '#ffffff',
+    subtextColor: 'rgba(255,255,255,0.6)',
+    borderColor: 'rgba(232,93,4,0.35)'
+  },
+  {
+    id: 'lavender',
+    name: 'Lavender',
+    primary: '#6d28d9',
+    accent: '#db2777',
+    bg: '#faf5ff',
+    bgGradient: '#ede9fe',
+    cardBg: '#ffffff',
+    pattern: 'none',
+    font: 'rounded',
+    style: 'clean',
+    borderColor: '#ddd6fe'
   }
 ]
 

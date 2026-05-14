@@ -5,6 +5,49 @@ import { getThemeById } from '../../lib/themes';
 import './Appearance.css';
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 
+function ThemeMiniPreview({ theme: t }) {
+  const getBg = () => {
+    if (t.id === 'aurora')   return 'radial-gradient(ellipse at 20% 50%, rgba(100,255,218,0.15) 0%, transparent 50%), linear-gradient(160deg, #0a1628 0%, #0d2040 100%)'
+    if (t.id === 'glass')    return 'linear-gradient(135deg, #16213e 0%, #0f3460 50%, #1a1a2e 100%)'
+    if (t.id === 'neon')     return '#0a0a0a'
+    if (t.id === 'midnight') return 'radial-gradient(ellipse at 50% 0%, rgba(122,106,202,0.4) 0%, transparent 70%), #0d0d1a'
+    return `linear-gradient(160deg, ${t.bgGradient} 0%, ${t.bg} 60%)`
+  }
+  const getLinkStyle = (i) => {
+    if (t.id === 'neon')
+      return { background: i === 0 ? 'rgba(0,255,136,0.2)' : 'transparent', border: `1px solid ${i === 0 ? '#00ff88' : 'rgba(0,255,136,0.2)'}`, color: '#00ff88' }
+    if (t.id === 'aurora' || t.id === 'glass')
+      return { background: i === 0 ? 'rgba(100,255,218,0.2)' : 'rgba(255,255,255,0.05)', border: `1px solid ${i === 0 ? 'rgba(100,255,218,0.5)' : 'rgba(255,255,255,0.1)'}`, color: i === 0 ? t.accent : '#fff' }
+    if (t.id === 'midnight')
+      return { background: i === 0 ? 'rgba(122,106,202,0.4)' : 'rgba(255,255,255,0.05)', border: `1px solid ${i === 0 ? 'rgba(122,106,202,0.7)' : 'rgba(255,255,255,0.1)'}`, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.7)' }
+    if (t.id === 'paper')
+      return { background: i === 0 ? '#c0392b' : '#fffef9', border: `1px solid ${i === 0 ? '#c0392b' : '#d4c9b0'}`, color: i === 0 ? '#fff' : '#2c2c2c', borderRadius: '3px' }
+    if (t.id === 'candy')
+      return { background: i === 0 ? 'linear-gradient(135deg, #d63384, #fd7e14)' : '#fff', border: `1px solid ${i === 0 ? 'transparent' : '#f8b4d9'}`, color: i === 0 ? '#fff' : '#d63384', borderRadius: '100px' }
+    const tc = t.textColor || t.primary
+    return { backgroundColor: i === 0 ? t.primary : (t.cardBg || '#fff'), borderColor: i === 0 ? t.primary : (t.borderColor || `${t.primary}22`), color: i === 0 ? '#fff' : tc }
+  }
+  const nameColor = t.textColor || t.primary
+  const fontFamily = t.font === 'mono' ? "'Courier New', monospace" : t.font === 'serif' ? 'Georgia, serif' : t.font === 'rounded' ? "'Trebuchet MS', sans-serif" : 'inherit'
+  return (
+    <div className="appearance__mini" style={{ background: getBg(), fontFamily }}>
+      {t.pattern === 'grid'    && <div className="appearance__mini-overlay appearance__mini-overlay--grid" />}
+      {t.pattern === 'dots'    && <div className="appearance__mini-overlay appearance__mini-overlay--dots" />}
+      {t.pattern === 'stars'   && <div className="appearance__mini-overlay appearance__mini-overlay--stars" />}
+      {t.pattern === 'noise'   && <div className="appearance__mini-overlay appearance__mini-overlay--noise" />}
+      {t.pattern === 'texture' && <div className="appearance__mini-overlay appearance__mini-overlay--texture" />}
+      {t.pattern === 'aurora'  && <div className="appearance__mini-overlay appearance__mini-overlay--aurora" style={{ '--accent': t.accent }} />}
+      {t.pattern === 'glass'   && <div className="appearance__mini-overlay appearance__mini-overlay--glass" />}
+      <div className="appearance__mini-content">
+        <div className="appearance__mini-avatar" style={{ background: `linear-gradient(135deg, ${t.primary}, ${t.accent})` }} />
+        <div className="appearance__mini-name" style={{ background: nameColor, opacity: 0.45 }} />
+        <div className="appearance__mini-link" style={getLinkStyle(0)} />
+        <div className="appearance__mini-link" style={getLinkStyle(1)} />
+      </div>
+    </div>
+  )
+}
+
 function Appearance() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -112,13 +155,6 @@ function Appearance() {
             </svg>
             Links
           </a>
-          <a href="/dashboard/appearance" className="dashboard__nav-item dashboard__nav-item--active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-            Appearance
-          </a>
           <a href="/dashboard/blocks" className="dashboard__nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="8" height="8" rx="1"/>
@@ -127,6 +163,13 @@ function Appearance() {
               <path d="M17 13v2m0 4v2m-2-4h2m2 0h2" strokeLinecap="round"/>
             </svg>
             Blocks
+          </a>
+          <a href="/dashboard/appearance" className="dashboard__nav-item dashboard__nav-item--active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Appearance
           </a>
           <a href="/dashboard/analytics" className="dashboard__nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -226,21 +269,7 @@ function Appearance() {
                 className={`appearance__theme ${form.theme === theme.id ? 'appearance__theme--active' : ''}`}
                 onClick={() => setForm({ ...form, theme: theme.id })}
               >
-                <div
-                  className="appearance__theme-preview"
-                  style={{
-                    background: theme.id === 'aurora' ? 'linear-gradient(135deg, #0a1628, #64ffda)'
-                      : theme.id === 'neon' ? 'linear-gradient(135deg, #0a0a0a, #00ff88)'
-                      : theme.id === 'glass' ? 'linear-gradient(135deg, #16213e, #e94560)'
-                      : theme.id === 'midnight' ? 'linear-gradient(135deg, #0d0d1a, #7a6aca)'
-                      : theme.id === 'candy' ? 'linear-gradient(135deg, #d63384, #fd7e14)'
-                      : theme.id === 'paper' ? 'linear-gradient(135deg, #f5f0e8, #c0392b)'
-                      : theme.id === 'earth' ? 'linear-gradient(135deg, #3d2b1f, #8b6914)'
-                      : `linear-gradient(135deg, ${theme.primary} 50%, ${theme.accent} 100%)`
-                  }}
-                >
-                  <div className="appearance__theme-dot" style={{ background: theme.bg }}></div>
-                </div>
+                <ThemeMiniPreview theme={theme} />
                 <span className="appearance__theme-name">{theme.name}</span>
                 {form.theme === theme.id && <div className="appearance__theme-check">✓</div>}
               </button>

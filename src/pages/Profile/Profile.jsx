@@ -19,12 +19,11 @@ const getEmbedUrl = (url) => {
   return null
 }
 
-// ─── Individual block renderers ───────────────────────────────────────────────
-function BlockLink({ block, theme, textColor, onLinkClick }) {
-  const isDark = theme.style === 'dark'
-  const getLinkStyle = (index) => {
+// ─── Block renderers ──────────────────────────────────────────────────────────
+function BlockLink({ block, theme, textColor }) {
+  const getLinkStyle = () => {
     const base = { transition: 'all 0.2s ease' }
-    if (theme.id === 'neon') return { ...base, background: index === 0 ? 'rgba(0,255,136,0.15)' : 'transparent', border: `1px solid ${index === 0 ? '#00ff88' : 'rgba(0,255,136,0.2)'}`, color: '#00ff88', boxShadow: index === 0 ? '0 0 20px rgba(0,255,136,0.3)' : 'none' }
+    if (theme.id === 'neon') return { ...base, background: 'rgba(0,255,136,0.15)', border: '1px solid #00ff88', color: '#00ff88', boxShadow: '0 0 20px rgba(0,255,136,0.3)' }
     if (theme.id === 'aurora' || theme.id === 'glass') return { ...base, background: 'rgba(100,255,218,0.15)', border: '1px solid rgba(100,255,218,0.4)', color: theme.accent, backdropFilter: 'blur(10px)' }
     if (theme.id === 'midnight') return { ...base, background: 'rgba(122,106,202,0.3)', border: '1px solid rgba(122,106,202,0.6)', color: '#fff', boxShadow: '0 0 30px rgba(122,106,202,0.3)' }
     if (theme.id === 'paper') return { ...base, background: theme.primary, border: `2px solid ${theme.primary}`, color: '#ffffff', borderRadius: '4px', boxShadow: '2px 2px 0px rgba(0,0,0,0.1)' }
@@ -32,12 +31,18 @@ function BlockLink({ block, theme, textColor, onLinkClick }) {
     return { ...base, backgroundColor: theme.primary, borderColor: theme.primary, color: '#ffffff' }
   }
   return (
-    <button className="profile__link" style={getLinkStyle(0)} onClick={() => onLinkClick(block)}>
+    <a
+      className="profile__link"
+      style={getLinkStyle()}
+      href={block.data.url}
+      target="_blank"
+      rel="noreferrer noopener"
+    >
       <span className="profile__link-title">{block.data.title || 'Link'}</span>
       <svg className="profile__link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 12h14M12 5l7 7-7 7"/>
       </svg>
-    </button>
+    </a>
   )
 }
 
@@ -75,7 +80,7 @@ function BlockVideo({ block }) {
 
 function BlockNewsletter({ block, userId, theme }) {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState('idle') // idle | loading | success | error
+  const [status, setStatus] = useState('idle')
 
   const handleSubmit = async () => {
     if (!email || !email.includes('@')) return
@@ -122,12 +127,8 @@ function BlockNewsletter({ block, userId, theme }) {
 }
 
 // ─── Main Profile component ───────────────────────────────────────────────────
-
-// THE FIX: Added customUsername prop here to accept the subdomain injection
 function Profile({ customUsername }) {
   const { username: paramUsername } = useParams()
-  
-  // THE FIX: Use the subdomain if it exists, otherwise fall back to standard URL path
   const username = customUsername || paramUsername
 
   const [profile, setProfile] = useState(null)
@@ -155,31 +156,14 @@ function Profile({ customUsername }) {
     setLoading(false)
   }
 
-  const handleLinkClick = async (link) => {
-    // 1. Open a blank window IMMEDIATELY (Safari sees this as user-triggered)
-    const newWindow = window.open('', '_blank', 'noreferrer');
-
-    // 2. Track the click in Supabase in the background
-    try {
-      await supabase.from('link_clicks').insert({
-        link_id: link.id,
-        user_id: profile.id,
-        clicked_at: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Click tracking failed", error);
-    }
-
-    // 3. Set the URL of the already-opened window
-    if (newWindow) {
-      newWindow.location.href = link.url;
-    }
-  };
-
-  const handleBlockLinkClick = async (block) => {
-    const url = block.data?.url
-    if (!url) return
-    window.open(url, '_blank', 'noreferrer')
+  // Fire-and-forget click tracking — never blocks navigation on any browser
+  const trackLinkClick = (linkId) => {
+    if (!profile) return
+    supabase.from('link_clicks').insert({
+      link_id: linkId,
+      user_id: profile.id,
+      clicked_at: new Date().toISOString()
+    }).catch(() => {})
   }
 
   if (loading) return <div className="profile__loading"><div className="profile__spinner" /></div>
@@ -234,7 +218,7 @@ function Profile({ customUsername }) {
   const renderBlock = (block) => {
     switch (block.type) {
       case 'link':
-        return <BlockLink key={block.id} block={block} theme={theme} textColor={textColor} onLinkClick={handleBlockLinkClick} />
+        return <BlockLink key={block.id} block={block} theme={theme} textColor={textColor} />
       case 'text':
         return <BlockText key={block.id} block={block} textColor={textColor} subtextColor={subtextColor} />
       case 'image':
@@ -269,21 +253,29 @@ function Profile({ customUsername }) {
           {profile.bio && <p className="profile__bio" style={{ color: subtextColor }}>{profile.bio}</p>}
         </div>
 
-        {/* Links */}
+        {/* Links — native <a> tags work correctly on iOS Safari */}
         {links.length > 0 && (
           <div className="profile__links">
             {links.map((link, index) => (
-              <button
+              <a
                 key={link.id}
                 className="profile__link"
                 style={getLinkStyle(index)}
-                onClick={() => handleLinkClick(link)}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={(e) => {
+                  e.preventDefault()
+                  trackLinkClick(link.id)
+                  const newTab = window.open(link.url, '_blank', 'noopener,noreferrer')
+                  if (!newTab) window.location.href = link.url
+                }}
               >
                 <span className="profile__link-title">{link.title}</span>
                 <svg className="profile__link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
-              </button>
+              </a>
             ))}
           </div>
         )}

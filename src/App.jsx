@@ -15,7 +15,6 @@ import Subscribers from './pages/Subscribers/Subscribers'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import './App.css'
-import { Analytics } from "@vercel/analytics/next"
 
 function OnboardingWrapper() {
   const [user, setUser] = useState(null)
