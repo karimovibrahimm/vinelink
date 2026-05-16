@@ -116,13 +116,6 @@ function Settings() {
             </svg>
             Links
           </a>
-          <a href="/dashboard/appearance" className="dashboard__nav-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-            Appearance
-          </a>
           <a href="/dashboard/blocks" className="dashboard__nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="8" height="8" rx="1"/>
@@ -131,6 +124,13 @@ function Settings() {
               <path d="M17 13v2m0 4v2m-2-4h2m2 0h2" strokeLinecap="round"/>
             </svg>
             Blocks
+          </a>
+          <a href="/dashboard/appearance" className="dashboard__nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Appearance
           </a>
           <a href="/dashboard/analytics" className="dashboard__nav-item">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

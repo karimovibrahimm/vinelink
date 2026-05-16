@@ -63,11 +63,28 @@ const BLOCK_TYPES = [
       { key: 'button_text', label: 'Button label',     placeholder: 'e.g. Subscribe', type: 'text' },
     ],
   },
+  {
+    type: 'spotify',
+    label: 'Spotify',
+    icon: '🎵',
+    description: 'Embed a Spotify track, album, playlist, or podcast episode',
+    fields: [
+      { key: 'url',   label: 'Spotify URL',     placeholder: 'https://open.spotify.com/track/...', type: 'text' },
+      { key: 'title', label: 'Title (optional)', placeholder: 'e.g. My latest track', type: 'text' },
+    ],
+  },
 ]
 
 const getBlockMeta = (type) => BLOCK_TYPES.find(b => b.type === type) || BLOCK_TYPES[0]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const getSpotifyEmbed = (url) => {
+  if (!url) return null
+  const match = url.match(/open\.spotify\.com\/(?:[^/]+\/)?(track|album|playlist|episode|show|artist)\/([^?&/]+)/)
+  if (match) return `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator`
+  return null
+}
+
 const getVideoEmbed = (url) => {
   if (!url) return null
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
@@ -84,6 +101,7 @@ const getBlockSummary = (block) => {
   if (type === 'image')      return data.caption || data.url?.slice(0, 40) || 'Image block'
   if (type === 'video')      return data.title || data.url?.slice(0, 40) || 'Video block'
   if (type === 'newsletter') return data.heading || 'Newsletter signup'
+  if (type === 'spotify')    return data.title   || data.url?.slice(0, 40) || 'Spotify embed'
   return 'Block'
 }
 

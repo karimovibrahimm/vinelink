@@ -19,6 +19,13 @@ const getEmbedUrl = (url) => {
   return null
 }
 
+const getSpotifyEmbedUrl = (url) => {
+  if (!url) return null
+  const match = url.match(/open\.spotify\.com\/(?:[^/]+\/)?(track|album|playlist|episode|show|artist)\/([^?&/]+)/)
+  if (match) return `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator`
+  return null
+}
+
 // ─── Block renderers ──────────────────────────────────────────────────────────
 function BlockLink({ block, theme, textColor }) {
   const getLinkStyle = () => {
@@ -74,6 +81,26 @@ function BlockVideo({ block }) {
       <div className="profile__block-video-wrap">
         <iframe src={embedUrl} title={block.data.title || 'Video'} frameBorder="0" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
       </div>
+    </div>
+  )
+}
+
+function BlockSpotify({ block }) {
+  const embedUrl = getSpotifyEmbedUrl(block.data.url)
+  if (!embedUrl) return null
+  return (
+    <div className="profile__block-spotify">
+      {block.data.title && <p className="profile__block-spotify-title">{block.data.title}</p>}
+      <iframe
+        style={{ borderRadius: '12px' }}
+        src={embedUrl}
+        width="100%"
+        height="152"
+        frameBorder="0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+        title={block.data.title || 'Spotify'}
+      />
     </div>
   )
 }
@@ -227,6 +254,8 @@ function Profile({ customUsername }) {
         return <BlockVideo key={block.id} block={block} />
       case 'newsletter':
         return <BlockNewsletter key={block.id} block={block} userId={profile.id} theme={theme} />
+      case 'spotify':
+        return <BlockSpotify key={block.id} block={block} />
       default:
         return null
     }
