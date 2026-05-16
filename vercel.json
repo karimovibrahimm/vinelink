@@ -1,10 +1,15 @@
 {
   "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "[^.]+\\.vinelink\\.xyz" }],
+      "destination": "/api/profile"
+    },
     { "source": "/(.*)", "destination": "/" }
   ],
   "functions": {
-    "middleware.js": {
-      "runtime": "edge"
+    "api/profile.js": {
+      "includeFiles": "dist/index.html"
     }
   }
 }
