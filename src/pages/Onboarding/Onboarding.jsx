@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getThemeById } from '../../lib/themes'
 import './Onboarding.css'
@@ -6,19 +6,95 @@ import './Onboarding.css'
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 const LOADING_STEPS = [
-  'Analyzing your content...',
-  'Crafting your bio...',
-  'Selecting the perfect theme...',
-  'Building your links...',
+  'Reading your content...',
+  'Generating 3 unique profiles...',
+  'Crafting bios and themes...',
+  'Finalizing your links...',
 ]
 
+function VariantCard({ variant, avatarPreview, selected, onSelect }) {
+  const theme = getThemeById(variant.theme)
+
+  const getCardBg = () => {
+    const t = theme
+    if (t.id === 'aurora' || t.id === 'glass') return 'linear-gradient(160deg, #0a1628, #0d2040)'
+    if (t.id === 'neon')     return '#0a0a0a'
+    if (t.id === 'midnight') return 'radial-gradient(ellipse at 50% 0%, rgba(122,106,202,0.3) 0%, transparent 60%), #0d0d1a'
+    return `linear-gradient(160deg, ${t.bgGradient || t.bg} 0%, ${t.bg} 100%)`
+  }
+
+  const getLinkStyle = (i) => {
+    const t = theme
+    if (t.id === 'neon')
+      return { background: 'rgba(0,255,136,0.15)', border: '1px solid #00ff88', color: '#00ff88' }
+    if (t.id === 'aurora' || t.id === 'glass')
+      return { background: 'rgba(100,255,218,0.15)', border: '1px solid rgba(100,255,218,0.4)', color: t.accent }
+    if (t.id === 'midnight')
+      return { background: 'rgba(122,106,202,0.3)', border: '1px solid rgba(122,106,202,0.6)', color: '#fff' }
+    if (t.id === 'paper')
+      return { background: i === 0 ? '#c0392b' : '#fffef9', border: `1px solid ${i === 0 ? '#c0392b' : '#d4c9b0'}`, color: i === 0 ? '#fff' : '#2c2c2c', borderRadius: '4px' }
+    if (t.id === 'candy')
+      return { background: i === 0 ? 'linear-gradient(135deg, #d63384, #fd7e14)' : '#fff', border: `1px solid ${i === 0 ? 'transparent' : '#f8b4d9'}`, color: i === 0 ? '#fff' : '#d63384', borderRadius: '100px' }
+    const tc = t.textColor || t.primary
+    return { backgroundColor: i === 0 ? t.primary : (t.cardBg || '#fff'), borderColor: i === 0 ? t.primary : (t.borderColor || `${t.primary}22`), color: i === 0 ? '#fff' : tc }
+  }
+
+  const nameColor = theme.textColor || theme.primary
+  const bioColor  = theme.subtextColor || (theme.style === 'dark' ? 'rgba(255,255,255,0.6)' : '#777')
+
+  return (
+    <button
+      className={`onboarding__variant${selected ? ' onboarding__variant--selected' : ''}`}
+      onClick={onSelect}
+    >
+      <div className="onboarding__variant-label">{variant.label}</div>
+
+      <div className="onboarding__variant-preview" style={{ background: getCardBg() }}>
+        <div
+          className="onboarding__variant-avatar"
+          style={{
+            background: avatarPreview ? 'none' : `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+          }}
+        >
+          {avatarPreview
+            ? <img src={avatarPreview} alt="avatar" />
+            : variant.full_name?.[0]?.toUpperCase()
+          }
+        </div>
+        <div className="onboarding__variant-name" style={{ color: nameColor }}>
+          {variant.full_name}
+        </div>
+        <div className="onboarding__variant-bio" style={{ color: bioColor }}>
+          {variant.bio}
+        </div>
+        <div className="onboarding__variant-links">
+          {variant.links?.slice(0, 3).map((link, i) => (
+            <div key={i} className="onboarding__variant-link" style={getLinkStyle(i)}>
+              {link.title}
+            </div>
+          ))}
+        </div>
+        <div className="onboarding__variant-theme-badge" style={{ color: bioColor }}>
+          {theme.name}
+        </div>
+      </div>
+
+      {selected && <div className="onboarding__variant-check">✓ Selected</div>}
+    </button>
+  )
+}
+
 function Onboarding({ user, profile, onComplete }) {
-  const [step, setStep] = useState(1)
-  const [socialInput, setSocialInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [loadingStep, setLoadingStep] = useState(0)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState('')
+  const [step, setStep]                   = useState(1)
+  const [socialInput, setSocialInput]     = useState('')
+  const [avatarFile, setAvatarFile]       = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [loading, setLoading]             = useState(false)
+  const [loadingStep, setLoadingStep]     = useState(0)
+  const [variants, setVariants]           = useState([])
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [error, setError]                 = useState('')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (!loading) return
@@ -28,6 +104,16 @@ function Onboarding({ user, profile, onComplete }) {
     )
     return () => timers.forEach(clearTimeout)
   }, [loading])
+
+  const handleAvatarFile = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return }
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setAvatarPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
 
   const handleSkip = async () => {
     await supabase.from('profiles').update({ onboarding_done: true }).eq('id', user.id)
@@ -48,20 +134,45 @@ function Onboarding({ user, profile, onComplete }) {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `You are helping set up a link-in-bio page. Based on this info: "${socialInput}", generate a profile.
+                text: `You are helping a creator set up their link-in-bio page on Vinelink. Based on this info: "${socialInput}"
 
-Respond ONLY with valid JSON, no markdown or explanation:
+Generate exactly 3 DISTINCT profile variants. Each must feel completely different — different vibe, tone, theme, and bio style. Be specific to their niche, not generic.
+
+Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
 {
-  "full_name": "their name or handle cleaned up",
-  "bio": "punchy 1-2 sentence bio under 120 chars that fits their niche",
-  "theme": "pick the best fit from: forest, ocean, rose, midnight, sand, slate, neon, aurora, paper, glass, candy, earth, sunset, lavender",
-  "links": [
-    { "title": "short descriptive label", "url": "full url including https://" }
+  "variants": [
+    {
+      "label": "Bold & Creative",
+      "full_name": "their real name or handle, cleaned up",
+      "bio": "edgy, punchy bio under 110 chars — memorable and specific to their niche, not generic",
+      "theme": "pick ONE from: neon, aurora, midnight, glass",
+      "links": [
+        { "title": "label that fits their brand voice", "url": "https://full-url-from-input" }
+      ]
+    },
+    {
+      "label": "Clean & Minimal",
+      "full_name": "their name",
+      "bio": "clean, confident bio under 110 chars — professional and clear",
+      "theme": "pick ONE from: sand, paper, slate, ocean, earth",
+      "links": [
+        { "title": "label", "url": "https://full-url-from-input" }
+      ]
+    },
+    {
+      "label": "Warm & Personal",
+      "full_name": "their name",
+      "bio": "friendly, personal bio under 110 chars — feels like a real person, not a brand",
+      "theme": "pick ONE from: forest, rose, candy, lavender, sunset",
+      "links": [
+        { "title": "label", "url": "https://full-url-from-input" }
+      ]
+    }
   ]
 }`
               }]
             }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+            generationConfig: { temperature: 0.9, maxOutputTokens: 1500 }
           })
         }
       )
@@ -70,9 +181,10 @@ Respond ONLY with valid JSON, no markdown or explanation:
       const text = data.candidates[0].content.parts[0].text
       const clean = text.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
-      setResult(parsed)
+      setVariants(parsed.variants)
+      setSelectedIndex(0)
       setStep(2)
-    } catch (e) {
+    } catch {
       setError('Something went wrong. Please try again.')
     }
 
@@ -81,22 +193,36 @@ Respond ONLY with valid JSON, no markdown or explanation:
 
   const handleApply = async () => {
     setLoading(true)
+    const chosen = variants[selectedIndex]
+
+    let avatarUrl = null
+    if (avatarFile) {
+      const fileExt = avatarFile.name.split('.').pop()
+      const filePath = `${user.id}/avatar.${fileExt}`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars').upload(filePath, avatarFile, { upsert: true })
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath)
+        avatarUrl = publicUrl
+      }
+    }
 
     await supabase.from('profiles').update({
-      full_name: result.full_name,
-      bio: result.bio,
-      theme: result.theme,
-      onboarding_done: true
+      full_name: chosen.full_name,
+      bio: chosen.bio,
+      theme: chosen.theme,
+      onboarding_done: true,
+      ...(avatarUrl && { avatar_url: avatarUrl }),
     }).eq('id', user.id)
 
-    if (result.links?.length > 0) {
+    if (chosen.links?.length > 0) {
       await supabase.from('links').insert(
-        result.links.map((link, i) => ({
+        chosen.links.map((link, i) => ({
           user_id: user.id,
           title: link.title,
           url: link.url.startsWith('http') ? link.url : 'https://' + link.url,
           position: i,
-          active: true
+          active: true,
         }))
       )
     }
@@ -105,36 +231,9 @@ Respond ONLY with valid JSON, no markdown or explanation:
     onComplete()
   }
 
-  const activeTheme = getThemeById(result?.theme)
-
-  const getPreviewBg = () => {
-    const t = activeTheme
-    if (t.id === 'aurora')   return 'linear-gradient(160deg, #0a1628 0%, #0d2040 100%)'
-    if (t.id === 'glass')    return 'linear-gradient(135deg, #16213e 0%, #0f3460 100%)'
-    if (t.id === 'neon')     return '#0a0a0a'
-    if (t.id === 'midnight') return 'radial-gradient(ellipse at 50% 0%, rgba(122,106,202,0.3) 0%, transparent 60%), #0d0d1a'
-    return `linear-gradient(160deg, ${t.bgGradient} 0%, ${t.bg} 60%)`
-  }
-
-  const getLinkStyle = (i) => {
-    const t = activeTheme
-    if (t.id === 'neon')
-      return { background: i === 0 ? 'rgba(0,255,136,0.15)' : 'transparent', border: `1px solid ${i === 0 ? '#00ff88' : 'rgba(0,255,136,0.2)'}`, color: '#00ff88' }
-    if (t.id === 'aurora' || t.id === 'glass')
-      return { background: i === 0 ? 'rgba(100,255,218,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${i === 0 ? 'rgba(100,255,218,0.4)' : 'rgba(255,255,255,0.1)'}`, color: i === 0 ? t.accent : '#fff' }
-    if (t.id === 'midnight')
-      return { background: i === 0 ? 'rgba(122,106,202,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${i === 0 ? 'rgba(122,106,202,0.6)' : 'rgba(255,255,255,0.1)'}`, color: '#fff' }
-    if (t.id === 'paper')
-      return { background: i === 0 ? '#c0392b' : '#fffef9', border: `1px solid ${i === 0 ? '#c0392b' : '#d4c9b0'}`, color: i === 0 ? '#fff' : '#2c2c2c', borderRadius: '4px' }
-    if (t.id === 'candy')
-      return { background: i === 0 ? 'linear-gradient(135deg, #d63384, #fd7e14)' : '#fff', border: `1px solid ${i === 0 ? 'transparent' : '#f8b4d9'}`, color: i === 0 ? '#fff' : '#d63384', borderRadius: '100px' }
-    const tc = t.textColor || t.primary
-    return { backgroundColor: i === 0 ? t.primary : (t.cardBg || '#fff'), borderColor: i === 0 ? t.primary : (t.borderColor || `${t.primary}22`), color: i === 0 ? '#fff' : tc }
-  }
-
   return (
     <div className="onboarding">
-      <div className="onboarding__container">
+      <div className={`onboarding__container${step === 2 ? ' onboarding__container--wide' : ''}`}>
 
         <a href="/" className="onboarding__logo">
           <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
@@ -157,12 +256,43 @@ Respond ONLY with valid JSON, no markdown or explanation:
             <div className="onboarding__badge">✨ AI Setup</div>
             <h1 className="onboarding__title">Let AI build your page</h1>
             <p className="onboarding__subtitle">
-              Paste your social links and a short description. Our AI will build your entire Vinelink page in seconds.
+              Describe yourself and paste your links. We'll generate 3 unique profiles for you to pick from.
             </p>
+
+            <div className="onboarding__avatar-section">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarFile}
+                style={{ display: 'none' }}
+              />
+              <button
+                className="onboarding__avatar-upload"
+                onClick={() => fileInputRef.current.click()}
+                type="button"
+              >
+                {avatarPreview
+                  ? <img src={avatarPreview} alt="avatar" className="onboarding__avatar-img" />
+                  : (
+                    <>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                      </svg>
+                      <span>Add photo</span>
+                    </>
+                  )
+                }
+              </button>
+              <span className="onboarding__avatar-hint">
+                {avatarPreview ? 'Click to change' : 'Optional — add a profile photo'}
+              </span>
+            </div>
 
             <textarea
               className="onboarding__textarea"
-              placeholder={`Paste your links and a short description, for example:\n\nInstagram: instagram.com/johndoe\nYouTube: youtube.com/johndoe\nI'm a travel photographer based in NYC`}
+              placeholder={`Tell us about yourself and paste your links, for example:\n\nI'm a travel photographer based in NYC\n\nInstagram: instagram.com/johndoe\nYouTube: youtube.com/johndoe\nWebsite: johndoe.com`}
               value={socialInput}
               onChange={(e) => setSocialInput(e.target.value)}
               rows={6}
@@ -173,7 +303,10 @@ Respond ONLY with valid JSON, no markdown or explanation:
             {loading ? (
               <div className="onboarding__loading-steps">
                 {LOADING_STEPS.map((s, i) => (
-                  <div key={i} className={`onboarding__loading-step ${i < loadingStep ? 'onboarding__loading-step--done' : ''} ${i === loadingStep ? 'onboarding__loading-step--active' : ''}`}>
+                  <div
+                    key={i}
+                    className={`onboarding__loading-step ${i < loadingStep ? 'onboarding__loading-step--done' : ''} ${i === loadingStep ? 'onboarding__loading-step--active' : ''}`}
+                  >
                     <div className="onboarding__loading-icon">
                       {i < loadingStep ? '✓' : i === loadingStep ? <span className="onboarding__spinner" /> : '·'}
                     </div>
@@ -183,7 +316,7 @@ Respond ONLY with valid JSON, no markdown or explanation:
               </div>
             ) : (
               <button className="onboarding__btn" onClick={handleGenerate} disabled={!socialInput.trim()}>
-                ✨ Build my Vinelink page
+                ✨ Generate 3 profile ideas
               </button>
             )}
 
@@ -193,43 +326,32 @@ Respond ONLY with valid JSON, no markdown or explanation:
           </div>
         )}
 
-        {step === 2 && result && (
+        {step === 2 && variants.length > 0 && (
           <div className="onboarding__step">
-            <div className="onboarding__badge">🎉 Your page is ready</div>
-            <h1 className="onboarding__title">Looking good!</h1>
-            <p className="onboarding__subtitle">Here's what AI created for you. You can edit everything after.</p>
+            <div className="onboarding__badge">🎨 Pick your style</div>
+            <h1 className="onboarding__title">Choose a vibe</h1>
+            <p className="onboarding__subtitle">
+              Three unique profiles — pick the one that feels most like you.
+            </p>
 
-            <div className="onboarding__preview" style={{ background: getPreviewBg() }}>
-              <div
-                className="onboarding__preview-avatar"
-                style={{ background: `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.accent})` }}
-              >
-                {result.full_name?.[0]?.toUpperCase()}
-              </div>
-              <div className="onboarding__preview-name" style={{ color: activeTheme.textColor || activeTheme.primary }}>
-                {result.full_name}
-              </div>
-              <div className="onboarding__preview-bio" style={{ color: activeTheme.subtextColor || (activeTheme.style === 'dark' ? 'rgba(255,255,255,0.6)' : '#666') }}>
-                {result.bio}
-              </div>
-              <div className="onboarding__preview-links">
-                {result.links?.map((link, i) => (
-                  <div key={i} className="onboarding__preview-link" style={getLinkStyle(i)}>
-                    {link.title}
-                  </div>
-                ))}
-              </div>
-              <div className="onboarding__preview-theme" style={{ color: activeTheme.subtextColor || (activeTheme.style === 'dark' ? 'rgba(255,255,255,0.4)' : '#999') }}>
-                Theme: <strong>{activeTheme.name}</strong>
-              </div>
+            <div className="onboarding__variants">
+              {variants.map((variant, i) => (
+                <VariantCard
+                  key={i}
+                  variant={variant}
+                  avatarPreview={avatarPreview}
+                  selected={selectedIndex === i}
+                  onSelect={() => setSelectedIndex(i)}
+                />
+              ))}
             </div>
 
             <div className="onboarding__actions">
               <button className="onboarding__btn" onClick={handleApply} disabled={loading}>
                 {loading ? 'Applying...' : '🚀 Apply and go to dashboard'}
               </button>
-              <button className="onboarding__skip" onClick={() => { setStep(1); setResult(null) }}>
-                ← Try again
+              <button className="onboarding__skip" onClick={() => { setStep(1); setVariants([]) }}>
+                ← Try again with different info
               </button>
             </div>
           </div>
