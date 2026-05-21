@@ -416,6 +416,52 @@
   color: rgba(255,255,255,0.6);
 }
 
+/* Google button */
+.auth__google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-background-dark);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 20px;
+}
+
+.auth__google-btn:hover:not(:disabled) {
+  border-color: #4285F4;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth__google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.auth__divider::before,
+.auth__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-background-dark);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .auth {

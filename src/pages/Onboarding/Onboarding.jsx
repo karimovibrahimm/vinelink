@@ -94,7 +94,11 @@ function Onboarding({ user, profile, onComplete }) {
   const [variants, setVariants]           = useState([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [error, setError]                 = useState('')
+  const [usernameInput, setUsernameInput] = useState('')
   const fileInputRef = useRef(null)
+
+  // Google OAuth users arrive without a username — we collect it during onboarding
+  const isGoogleUser = !profile?.username
 
   useEffect(() => {
     if (!loading) return
@@ -116,12 +120,22 @@ function Onboarding({ user, profile, onComplete }) {
   }
 
   const handleSkip = async () => {
-    await supabase.from('profiles').update({ onboarding_done: true }).eq('id', user.id)
+    if (isGoogleUser && !usernameInput.trim()) {
+      setError('Please choose a username before continuing.')
+      return
+    }
+    const update = { onboarding_done: true }
+    if (isGoogleUser) update.username = usernameInput.trim()
+    await supabase.from('profiles').upsert({ id: user.id, ...update })
     onComplete()
   }
 
   const handleGenerate = async () => {
     if (!socialInput.trim()) return
+    if (isGoogleUser && !usernameInput.trim()) {
+      setError('Please choose a username first.')
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -192,6 +206,10 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
   }
 
   const handleApply = async () => {
+    if (isGoogleUser && !usernameInput.trim()) {
+      setError('Please go back and choose a username first.')
+      return
+    }
     setLoading(true)
     const chosen = variants[selectedIndex]
 
@@ -207,13 +225,15 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       }
     }
 
-    await supabase.from('profiles').update({
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      ...(isGoogleUser && usernameInput.trim() && { username: usernameInput.trim() }),
       full_name: chosen.full_name,
       bio: chosen.bio,
       theme: chosen.theme,
       onboarding_done: true,
       ...(avatarUrl && { avatar_url: avatarUrl }),
-    }).eq('id', user.id)
+    })
 
     if (chosen.links?.length > 0) {
       await supabase.from('links').insert(
@@ -289,6 +309,22 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
                 {avatarPreview ? 'Click to change' : 'Optional — add a profile photo'}
               </span>
             </div>
+
+            {isGoogleUser && (
+              <div className="onboarding__username-field">
+                <label className="onboarding__username-label">Choose your username</label>
+                <div className="onboarding__username-row">
+                  <input
+                    className="onboarding__username-input"
+                    type="text"
+                    placeholder="yourname"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  />
+                  <span className="onboarding__username-suffix">.vinelink.xyz</span>
+                </div>
+              </div>
+            )}
 
             <textarea
               className="onboarding__textarea"

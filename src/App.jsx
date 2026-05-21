@@ -4,6 +4,7 @@ import Landing from './pages/Landing/Landing'
 import Signup from './pages/Auth/Signup'
 import Login from './pages/Auth/Login'
 import ForgotPassword from './pages/Auth/ForgotPassword'
+import AuthCallback from './pages/Auth/AuthCallback'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Appearance from './pages/Dashboard/Appearance'
 import Analytics from './pages/Dashboard/Analytics'
@@ -81,6 +82,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/onboarding" element={<OnboardingWrapper />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/appearance" element={<Appearance />} />

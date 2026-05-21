@@ -293,6 +293,56 @@
   color: var(--color-primary);
 }
 
+/* Username field for Google users */
+.onboarding__username-field {
+  width: 100%;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.onboarding__username-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.onboarding__username-row {
+  display: flex;
+  align-items: center;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-background-dark);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.onboarding__username-row:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26,58,42,0.08);
+}
+
+.onboarding__username-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: none;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background: transparent;
+  outline: none;
+  font-family: var(--font-family);
+}
+
+.onboarding__username-suffix {
+  padding: 12px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background: var(--color-background-dark);
+  border-left: 1.5px solid var(--color-background-dark);
+  white-space: nowrap;
+}
+
 /* Avatar upload */
 .onboarding__avatar-section {
   display: flex;
