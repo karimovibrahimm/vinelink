@@ -1,25 +1,36 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 
 export default function AuthCallback() {
+  const handled = useRef(false)
+
   useEffect(() => {
-    const handle = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/login'; return }
+    const redirect = async (session) => {
+      if (handled.current) return
+      handled.current = true
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, onboarding_done')
+        .select('onboarding_done')
         .eq('id', session.user.id)
         .single()
 
-      if (!profile || !profile.onboarding_done) {
-        window.location.href = '/onboarding'
-      } else {
-        window.location.href = '/dashboard'
-      }
+      window.location.href = (!profile || !profile.onboarding_done)
+        ? '/onboarding'
+        : '/dashboard'
     }
-    handle()
+
+    // Primary: fires when OAuth code exchange completes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) redirect(session)
+    })
+
+    // Fallback: already has a session (e.g. page refresh)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) redirect(session)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   return (
