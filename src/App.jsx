@@ -50,6 +50,15 @@ function OnboardingWrapper() {
 }
 
 function App() {
+  // Intercept Supabase hash-based auth tokens that land on the root URL
+  // This happens when the redirectTo URL isn't whitelisted and Supabase
+  // falls back to the Site URL with tokens in the hash fragment
+  const hash = window.location.hash
+  if (hash.includes('access_token=') || hash.includes('error_description=')) {
+    window.location.replace('/auth/callback' + hash)
+    return null
+  }
+
   const [subdomain, setSubdomain] = useState(null)
   const [checking, setChecking] = useState(true)
 
