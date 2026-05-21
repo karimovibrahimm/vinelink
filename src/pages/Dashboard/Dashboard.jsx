@@ -4,6 +4,7 @@ import AiAssistant from '../../components/AiAssistant/AiAssistant'
 import { getThemeById } from '../../lib/themes'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import ProfileAudit from '../../components/ProfileAudit/ProfileAudit'
 import {
   DndContext,
   closestCenter,
@@ -86,6 +87,7 @@ function Dashboard() {
   const [newLink, setNewLink] = useState({ title: '', url: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [auditOpen, setAuditOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -196,10 +198,20 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="dashboard__loading">
-        <div className="dashboard__spinner"></div>
-        <p>Loading your dashboard...</p>
-      </div>
+      <DashboardLayout activePage="links" profile={null}>
+        <main className="dashboard__main">
+          <div className="dashboard__header">
+            <div>
+              <div className="sk" style={{ height: 26, width: 140, marginBottom: 10 }}/>
+              <div className="sk" style={{ height: 14, width: 220 }}/>
+            </div>
+          </div>
+          <div className="sk" style={{ height: 50, borderRadius: 12, margin: '24px 0 28px' }}/>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="sk" style={{ height: 64, borderRadius: 12, marginBottom: 10 }}/>
+          ))}
+        </main>
+      </DashboardLayout>
     )
   }
 
@@ -216,20 +228,26 @@ function Dashboard() {
             <p className="dashboard__subtitle">Drag to reorder. Toggle to show or hide.</p>
           </div>
           <div className="dashboard__header-actions">
-            <a href={`https://${profile?.username}.vinelink.xyz`} target="_blank" rel="noreferrer" className="dashboard__preview-btn">
+            <button className="dashboard__audit-btn" onClick={() => setAuditOpen(true)} title="Audit page">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <span>Audit page</span>
+            </button>
+            <a href={`https://${profile?.username}.vinelink.xyz`} target="_blank" rel="noreferrer" className="dashboard__preview-btn" title="Preview page">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              Preview page
+              <span>Preview page</span>
             </a>
-            <button className="dashboard__add-btn" onClick={() => setAddingLink(true)}>
+            <button className="dashboard__add-btn" onClick={() => setAddingLink(true)} title="Add link">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              Add link
+              <span>Add link</span>
             </button>
           </div>
         </div>
@@ -299,6 +317,14 @@ function Dashboard() {
       />
 
       <AiAssistant user={user} profile={profile} links={links} onApply={handleAiApply}/>
+
+      <ProfileAudit
+        profile={profile}
+        links={links}
+        blocks={blocks}
+        isOpen={auditOpen}
+        onClose={() => setAuditOpen(false)}
+      />
 
     </DashboardLayout>
   )

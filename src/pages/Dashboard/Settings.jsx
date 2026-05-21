@@ -63,10 +63,20 @@ function Settings() {
 
   if (loading) {
     return (
-      <div className="dashboard__loading">
-        <div className="dashboard__spinner"></div>
-        <p>Loading...</p>
-      </div>
+      <DashboardLayout activePage="settings" profile={null}>
+        <main className="dashboard__main">
+          <div className="dashboard__header">
+            <div className="sk" style={{ height: 26, width: 110 }}/>
+          </div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} style={{ marginTop: 36 }}>
+              <div className="sk" style={{ height: 16, width: 130, marginBottom: 18 }}/>
+              <div className="sk" style={{ height: 44, marginBottom: 12 }}/>
+              <div className="sk" style={{ height: 44 }}/>
+            </div>
+          ))}
+        </main>
+      </DashboardLayout>
     )
   }
 

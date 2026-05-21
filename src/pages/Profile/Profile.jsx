@@ -193,7 +193,19 @@ function Profile({ customUsername }) {
     }).catch(() => {})
   }
 
-  if (loading) return <div className="profile__loading"><div className="profile__spinner" /></div>
+  if (loading) return (
+    <div className="profile__loading">
+      <div style={{ width: '100%', maxWidth: 420, padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <div className="sk" style={{ width: 88, height: 88, borderRadius: '50%' }}/>
+        <div className="sk" style={{ width: 180, height: 22 }}/>
+        <div className="sk" style={{ width: 260, height: 14 }}/>
+        <div className="sk" style={{ width: 240, height: 14 }}/>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="sk" style={{ width: '100%', height: 52, borderRadius: 12 }}/>
+        ))}
+      </div>
+    </div>
+  )
 
   if (notFound) return (
     <div className="profile__notfound">

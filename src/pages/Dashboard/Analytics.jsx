@@ -75,10 +75,20 @@ function Analytics() {
   const totalClicks = clicks.length
 
   if (loading) return (
-    <div className="dashboard__loading">
-      <div className="dashboard__spinner"></div>
-      <p>Loading...</p>
-    </div>
+    <DashboardLayout activePage="analytics" profile={null}>
+      <main className="dashboard__main">
+        <div className="dashboard__header">
+          <div className="sk" style={{ height: 26, width: 120 }}/>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, margin: '32px 0 20px' }}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="sk" style={{ height: 110, borderRadius: 12 }}/>
+          ))}
+        </div>
+        <div className="sk" style={{ height: 280, borderRadius: 12, marginBottom: 16 }}/>
+        <div className="sk" style={{ height: 200, borderRadius: 12 }}/>
+      </main>
+    </DashboardLayout>
   )
 
   return (

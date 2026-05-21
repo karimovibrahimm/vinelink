@@ -118,10 +118,27 @@ function Appearance() {
   const displayAvatar = avatarPreview || avatarUrl
 
   if (loading) return (
-    <div className="dashboard__loading">
-      <div className="dashboard__spinner"></div>
-      <p>Loading...</p>
-    </div>
+    <DashboardLayout activePage="appearance" profile={null}>
+      <main className="dashboard__main">
+        <div className="dashboard__header">
+          <div className="sk" style={{ height: 26, width: 160 }}/>
+        </div>
+        <div style={{ display: 'flex', gap: 16, margin: '32px 0 24px', alignItems: 'center' }}>
+          <div className="sk" style={{ width: 80, height: 80, borderRadius: '50%' }}/>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="sk" style={{ height: 14, width: '50%' }}/>
+            <div className="sk" style={{ height: 14, width: '35%' }}/>
+          </div>
+        </div>
+        <div className="sk" style={{ height: 44, marginBottom: 12 }}/>
+        <div className="sk" style={{ height: 88, marginBottom: 32 }}/>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="sk" style={{ height: 96, borderRadius: 12 }}/>
+          ))}
+        </div>
+      </main>
+    </DashboardLayout>
   )
 
   return (
