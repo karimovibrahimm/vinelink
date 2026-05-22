@@ -26,8 +26,27 @@
 
 .settings__plan-pro {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.settings__manage-btn {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  padding: 8px 16px;
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.settings__manage-btn:hover {
+  background: var(--color-primary);
+  color: white;
 }
 
 .settings__plan-badge {

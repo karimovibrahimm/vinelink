@@ -155,8 +155,20 @@ function Settings() {
           <h2 className="settings__section-title">Plan</h2>
           {profile?.plan === 'pro' ? (
             <div className="settings__plan-pro">
-              <div className="settings__plan-badge">⚡ Pro</div>
-              <div className="settings__plan-desc">You're on the Pro plan. Thank you for supporting Vinelink!</div>
+              <div>
+                <div className="settings__plan-badge">⚡ Pro</div>
+                <div className="settings__plan-desc" style={{ marginTop: 6 }}>
+                  You're on the Pro plan. Thank you for supporting Vinelink!
+                </div>
+              </div>
+              <a
+                href="https://polar.sh/settings/subscriptions"
+                target="_blank"
+                rel="noreferrer"
+                className="settings__manage-btn"
+              >
+                Manage subscription ↗
+              </a>
             </div>
           ) : (
             <div className="settings__plan-free">
