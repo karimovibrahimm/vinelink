@@ -294,8 +294,11 @@ function Dashboard() {
               navigator.clipboard.writeText(getProfileUrl(profile?.username))
               setCopied(true)
               setTimeout(() => setCopied(false), 2000)
-            }}>
-              {copied ? '✓ Copied!' : 'Copy link'}
+            }} title="Copy link">
+              <svg className="dashboard__share-bar-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>{copied ? '✓ Copied!' : 'Copy link'}</span>
             </button>
             <button className="dashboard__qr-btn" onClick={() => setQrOpen(true)} title="Get QR code">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -303,7 +306,13 @@ function Dashboard() {
                 <rect x="3" y="14" width="7" height="7"/>
                 <line x1="17" y1="17" x2="17" y2="21"/><line x1="21" y1="17" x2="17" y2="17"/><line x1="21" y1="21" x2="21" y2="17"/>
               </svg>
-              QR
+              <span>QR</span>
+            </button>
+            <button className="dashboard__mobile-preview-open" onClick={() => setMobilePreview(true)} title="Preview page">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+              </svg>
+              <span>Preview</span>
             </button>
           </div>
         </div>

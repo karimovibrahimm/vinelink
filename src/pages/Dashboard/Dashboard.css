@@ -303,6 +303,8 @@
   white-space: nowrap;
 }
 
+.dashboard__share-bar-icon { display: none; }
+
 /* Mobile preview button — hidden on desktop, shown on mobile */
 .dashboard__mobile-preview-open {
   display: none;
@@ -796,8 +798,26 @@
     justify-content: center;
     font-size: var(--font-size-sm);
   }
+  /* Show preview button in share bar on mobile */
   .dashboard__mobile-preview-open {
     display: inline-flex;
+  }
+
+  /* Collapse share bar buttons to icon-only on mobile */
+  .dashboard__link-actions .dashboard__copy-btn span,
+  .dashboard__link-actions .dashboard__qr-btn span,
+  .dashboard__link-actions .dashboard__mobile-preview-open span {
+    display: none;
+  }
+
+  .dashboard__share-bar-icon {
+    display: inline-block;
+  }
+
+  .dashboard__link-actions .dashboard__copy-btn,
+  .dashboard__link-actions .dashboard__qr-btn,
+  .dashboard__link-actions .dashboard__mobile-preview-open {
+    padding: 6px 10px;
   }
 }
 
