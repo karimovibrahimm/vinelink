@@ -617,6 +617,13 @@
   color: var(--color-primary);
 }
 
+.dashboard__delete-confirm-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-error);
+  white-space: nowrap;
+}
+
 .dashboard__icon-btn--danger:hover {
   background-color: #fdecea;
   color: var(--color-error);
