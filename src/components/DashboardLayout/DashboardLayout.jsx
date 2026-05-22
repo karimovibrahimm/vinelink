@@ -37,7 +37,7 @@ const logout = async () => {
 async function startCheckout(profile) {
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    const res = await fetch('/api/polar/checkout', {
+    const res = await fetch('/api/polar-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id, email: user.email }),
@@ -58,7 +58,7 @@ export default function DashboardLayout({ activePage, profile, children }) {
     setUpgrading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const res  = await fetch('/api/polar/checkout', {
+      const res  = await fetch('/api/polar-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, email: user.email }),
