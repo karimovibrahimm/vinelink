@@ -48,44 +48,35 @@ function VariantCard({ variant, avatarPreview, selected, onSelect }) {
       onClick={onSelect}
     >
       <div className="onboarding__variant-label">{variant.label}</div>
-
       <div className="onboarding__variant-preview" style={{ background: getCardBg() }}>
         <div
           className="onboarding__variant-avatar"
-          style={{
-            background: avatarPreview ? 'none' : `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-          }}
+          style={{ background: avatarPreview ? 'none' : `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}
         >
-          {avatarPreview
-            ? <img src={avatarPreview} alt="avatar" />
-            : variant.full_name?.[0]?.toUpperCase()
-          }
+          {avatarPreview ? <img src={avatarPreview} alt="avatar" /> : variant.full_name?.[0]?.toUpperCase()}
         </div>
-        <div className="onboarding__variant-name" style={{ color: nameColor }}>
-          {variant.full_name}
-        </div>
-        <div className="onboarding__variant-bio" style={{ color: bioColor }}>
-          {variant.bio}
-        </div>
+        <div className="onboarding__variant-name" style={{ color: nameColor }}>{variant.full_name}</div>
+        <div className="onboarding__variant-bio" style={{ color: bioColor }}>{variant.bio}</div>
         <div className="onboarding__variant-links">
           {variant.links?.slice(0, 3).map((link, i) => (
-            <div key={i} className="onboarding__variant-link" style={getLinkStyle(i)}>
-              {link.title}
-            </div>
+            <div key={i} className="onboarding__variant-link" style={getLinkStyle(i)}>{link.title}</div>
           ))}
         </div>
-        <div className="onboarding__variant-theme-badge" style={{ color: bioColor }}>
-          {theme.name}
-        </div>
+        <div className="onboarding__variant-theme-badge" style={{ color: bioColor }}>{theme.name}</div>
       </div>
-
       {selected && <div className="onboarding__variant-check">✓ Selected</div>}
     </button>
   )
 }
 
 function Onboarding({ user, profile, onComplete }) {
-  const [step, setStep]                   = useState(1)
+  // Google OAuth users have no username — they start at step 0
+  const isGoogleUser = !profile?.username
+
+  const [step, setStep]                   = useState(isGoogleUser ? 0 : 1)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameChecking, setUsernameChecking] = useState(false)
+  const [usernameTaken, setUsernameTaken] = useState(false)
   const [socialInput, setSocialInput]     = useState('')
   const [avatarFile, setAvatarFile]       = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -94,11 +85,39 @@ function Onboarding({ user, profile, onComplete }) {
   const [variants, setVariants]           = useState([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [error, setError]                 = useState('')
-  const [usernameInput, setUsernameInput] = useState('')
   const fileInputRef = useRef(null)
 
-  // Google OAuth users arrive without a username — we collect it during onboarding
-  const isGoogleUser = !profile?.username
+  // Username format validation
+  const usernameFormatError = (() => {
+    const u = usernameInput
+    if (!u) return ''
+    if (u.length < 3)  return 'At least 3 characters'
+    if (u.length > 32) return 'Max 32 characters'
+    if (!/^[a-z0-9-]+$/.test(u)) return 'Only lowercase letters, numbers, and hyphens'
+    if (/^-|-$/.test(u)) return 'Cannot start or end with a hyphen'
+    if (/--/.test(u))    return 'No consecutive hyphens'
+    return ''
+  })()
+
+  const usernameError = usernameFormatError || (usernameTaken ? 'This username is already taken' : '')
+  const usernameValid = usernameInput && !usernameError && !usernameChecking
+
+  // Debounced availability check
+  useEffect(() => {
+    setUsernameTaken(false)
+    if (!usernameInput || usernameFormatError) return
+    setUsernameChecking(true)
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', usernameInput)
+        .maybeSingle()
+      setUsernameTaken(!!data)
+      setUsernameChecking(false)
+    }, 500)
+    return () => clearTimeout(t)
+  }, [usernameInput, usernameFormatError])
 
   useEffect(() => {
     if (!loading) return
@@ -119,23 +138,24 @@ function Onboarding({ user, profile, onComplete }) {
     reader.readAsDataURL(file)
   }
 
+  const handleUsernameNext = () => {
+    if (!usernameValid) return
+    setError('')
+    setStep(1)
+  }
+
   const handleSkip = async () => {
-    if (isGoogleUser && !usernameInput.trim()) {
-      setError('Please choose a username before continuing.')
-      return
-    }
-    const update = { onboarding_done: true }
-    if (isGoogleUser) update.username = usernameInput.trim()
-    await supabase.from('profiles').upsert({ id: user.id, ...update })
+    // Google users already confirmed their username in step 0
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      ...(isGoogleUser && { username: usernameInput.trim() }),
+      onboarding_done: true,
+    })
     onComplete()
   }
 
   const handleGenerate = async () => {
     if (!socialInput.trim()) return
-    if (isGoogleUser && !usernameInput.trim()) {
-      setError('Please choose a username first.')
-      return
-    }
     setLoading(true)
     setError('')
 
@@ -197,7 +217,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       const parsed = JSON.parse(clean)
       setVariants(parsed.variants)
       setSelectedIndex(0)
-      setStep(2)
+      setStep(isGoogleUser ? 2 : 2)
     } catch {
       setError('Something went wrong. Please try again.')
     }
@@ -206,10 +226,6 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
   }
 
   const handleApply = async () => {
-    if (isGoogleUser && !usernameInput.trim()) {
-      setError('Please go back and choose a username first.')
-      return
-    }
     setLoading(true)
     const chosen = variants[selectedIndex]
 
@@ -227,7 +243,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
 
     await supabase.from('profiles').upsert({
       id: user.id,
-      ...(isGoogleUser && usernameInput.trim() && { username: usernameInput.trim() }),
+      ...(isGoogleUser && { username: usernameInput.trim() }),
       full_name: chosen.full_name,
       bio: chosen.bio,
       theme: chosen.theme,
@@ -251,6 +267,10 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
     onComplete()
   }
 
+  // Step dots: Google users have 3 steps (0,1,2), email users have 2 (1,2)
+  const totalSteps  = isGoogleUser ? 3 : 2
+  const currentDot  = isGoogleUser ? step : step - 1
+
   return (
     <div className="onboarding">
       <div className={`onboarding__container${step === 2 ? ' onboarding__container--wide' : ''}`}>
@@ -265,12 +285,75 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
           Vinelink
         </a>
 
+        {/* Step dots */}
         <div className="onboarding__steps">
-          <div className={`onboarding__step-dot ${step >= 1 ? 'onboarding__step-dot--active' : ''}`} />
-          <div className="onboarding__step-line" />
-          <div className={`onboarding__step-dot ${step >= 2 ? 'onboarding__step-dot--active' : ''}`} />
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <span key={i} style={{ display: 'contents' }}>
+              {i > 0 && <div className="onboarding__step-line" />}
+              <div className={`onboarding__step-dot${currentDot >= i ? ' onboarding__step-dot--active' : ''}`} />
+            </span>
+          ))}
         </div>
 
+        {/* ── Step 0: Username (Google users only) ── */}
+        {step === 0 && (
+          <div className="onboarding__step">
+            <div className="onboarding__badge">👋 Welcome</div>
+            <h1 className="onboarding__title">Choose your username</h1>
+            <p className="onboarding__subtitle">
+              This is your unique Vinelink address. You can't change it later.
+            </p>
+
+            <div className="onboarding__username-field">
+              <div className={`onboarding__username-row${
+                usernameInput && usernameError ? ' onboarding__username-row--error' :
+                usernameValid ? ' onboarding__username-row--valid' : ''
+              }`}>
+                <input
+                  className="onboarding__username-input"
+                  type="text"
+                  placeholder="yourname"
+                  value={usernameInput}
+                  onChange={(e) => {
+                    setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                    setError('')
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleUsernameNext()}
+                  autoFocus
+                />
+                <span className="onboarding__username-suffix">.vinelink.xyz</span>
+              </div>
+
+              {usernameInput && usernameChecking && (
+                <span className="onboarding__username-status onboarding__username-status--checking">
+                  Checking availability…
+                </span>
+              )}
+              {usernameInput && !usernameChecking && usernameError && (
+                <span className="onboarding__username-status onboarding__username-status--error">
+                  {usernameError}
+                </span>
+              )}
+              {usernameValid && (
+                <span className="onboarding__username-status onboarding__username-status--valid">
+                  ✓ {usernameInput}.vinelink.xyz is available
+                </span>
+              )}
+            </div>
+
+            {error && <div className="onboarding__error">{error}</div>}
+
+            <button
+              className="onboarding__btn"
+              onClick={handleUsernameNext}
+              disabled={!usernameValid}
+            >
+              Continue →
+            </button>
+          </div>
+        )}
+
+        {/* ── Step 1: AI setup ── */}
         {step === 1 && (
           <div className="onboarding__step">
             <div className="onboarding__badge">✨ AI Setup</div>
@@ -310,22 +393,6 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
               </span>
             </div>
 
-            {isGoogleUser && (
-              <div className="onboarding__username-field">
-                <label className="onboarding__username-label">Choose your username</label>
-                <div className="onboarding__username-row">
-                  <input
-                    className="onboarding__username-input"
-                    type="text"
-                    placeholder="yourname"
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  />
-                  <span className="onboarding__username-suffix">.vinelink.xyz</span>
-                </div>
-              </div>
-            )}
-
             <textarea
               className="onboarding__textarea"
               placeholder={`Tell us about yourself and paste your links, for example:\n\nI'm a travel photographer based in NYC\n\nInstagram: instagram.com/johndoe\nYouTube: youtube.com/johndoe\nWebsite: johndoe.com`}
@@ -362,6 +429,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
           </div>
         )}
 
+        {/* ── Step 2: Pick variant ── */}
         {step === 2 && variants.length > 0 && (
           <div className="onboarding__step">
             <div className="onboarding__badge">🎨 Pick your style</div>

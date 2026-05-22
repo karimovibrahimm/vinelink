@@ -15,27 +15,45 @@ async function redirectUser(session) {
 
 export default function AuthCallback() {
   useEffect(() => {
-    const handle = async () => {
-      try {
-        // PKCE flow: code in query string
-        const code = new URLSearchParams(window.location.search).get('code')
-        if (code) {
-          const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
-          if (session) { await redirectUser(session); return }
-          if (error) { window.location.href = '/login'; return }
+    let done = false
+
+    // onAuthStateChange fires once Supabase finishes processing
+    // the hash tokens — this is the reliable way to catch the session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (done) return
+        if (event === 'SIGNED_IN' && session) {
+          done = true
+          subscription.unsubscribe()
+          await redirectUser(session)
         }
+      }
+    )
 
-        // Implicit flow: tokens arrive via hash (handled automatically by getSession)
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) { await redirectUser(session); return }
+    // Also handle PKCE code flow and already-existing sessions
+    const init = async () => {
+      const code = new URLSearchParams(window.location.search).get('code')
+      if (code) {
+        const { data: { session } } = await supabase.auth.exchangeCodeForSession(code)
+        if (session && !done) {
+          done = true
+          subscription.unsubscribe()
+          await redirectUser(session)
+          return
+        }
+      }
 
-        window.location.href = '/login'
-      } catch {
-        window.location.href = '/login'
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session && !done) {
+        done = true
+        subscription.unsubscribe()
+        await redirectUser(session)
       }
     }
 
-    handle()
+    init()
+
+    return () => subscription.unsubscribe()
   }, [])
 
   return (
