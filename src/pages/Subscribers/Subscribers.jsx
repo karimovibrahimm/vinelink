@@ -3,11 +3,13 @@ import { supabase } from '../../lib/supabase'
 import './Subscribers.css'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import usePageMeta from '../../lib/usePageMeta'
+import { useToast } from '../../lib/ToastContext'
 
 function Subscribers() {
   const [user, setUser]       = useState(null)
   const [profile, setProfile] = useState(null)
   usePageMeta('Subscribers | Vinelink', 'View and manage your newsletter subscribers on Vinelink.')
+  const toast = useToast()
 
   const [groups, setGroups]   = useState([])
   const [loading, setLoading] = useState(true)
@@ -53,6 +55,7 @@ function Subscribers() {
   const handleDelete = async (id) => {
     await supabase.from('newsletter_subscribers').delete().eq('id', id)
     await fetchData(user.id)
+    toast.success('Subscriber removed.')
   }
 
   const handleExportCSV = (group) => {

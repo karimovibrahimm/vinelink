@@ -16,6 +16,7 @@ import Blocks from './pages/Blocks/Block'
 import Subscribers from './pages/Subscribers/Subscribers'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import { ToastProvider } from './lib/ToastContext'
 import './App.css'
 
 function OnboardingWrapper() {
@@ -75,6 +76,7 @@ function App() {
   if (subdomain) return <Profile customUsername={subdomain} />
 
   return (
+    <ToastProvider>
     <BrowserRouter>
       <div className="app">
         <Routes>
@@ -95,6 +97,7 @@ function App() {
         </Routes>
       </div>
     </BrowserRouter>
+    </ToastProvider>
   )
 }
 

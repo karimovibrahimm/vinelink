@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import usePageMeta from '../../lib/usePageMeta'
+import { useToast } from '../../lib/ToastContext'
 import './Settings.css'
 
 function Settings() {
@@ -10,6 +11,7 @@ function Settings() {
   const [loading, setLoading] = useState(true)
   usePageMeta('Settings | Vinelink', 'Manage your Vinelink account settings, email, and password.')
 
+  const toast = useToast()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [emailPending, setEmailPending] = useState(false)
@@ -37,7 +39,8 @@ function Settings() {
     setSaving(true)
     setError('')
     const { error } = await supabase.auth.updateUser({ email: form.email })
-    if (error) { setError(error.message) } else { setEmailPending(true) }
+    if (error) { setError(error.message); toast.error('Failed to update email.') }
+    else { setEmailPending(true); toast.info('Confirmation email sent.') }
     setSaving(false)
   }
 
@@ -47,10 +50,11 @@ function Settings() {
     if (form.newPassword.length < 6) { setError('Password must be at least 6 characters.'); return }
     setSaving(true)
     const { error } = await supabase.auth.updateUser({ password: form.newPassword })
-    if (error) { setError(error.message) } else {
+    if (error) { setError(error.message); toast.error('Failed to update password.') } else {
       setForm(f => ({ ...f, newPassword: '', confirmPassword: '' }))
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+      toast.success('Password updated!')
     }
     setSaving(false)
   }

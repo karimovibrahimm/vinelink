@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useToast } from '../../lib/ToastContext'
 import AiAssistant from '../../components/AiAssistant/AiAssistant'
 import { getThemeById } from '../../lib/themes'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import ProfileAudit from '../../components/ProfileAudit/ProfileAudit'
+import QRModal from '../../components/QRModal/QRModal'
 import { getProfileUrl, getProfileDisplayUrl } from '../../lib/url'
 import usePageMeta from '../../lib/usePageMeta'
 import {
@@ -94,6 +96,8 @@ function Dashboard() {
   const [mobilePreview, setMobilePreview] = useState(false)
   const [error, setError] = useState('')
   const [auditOpen, setAuditOpen] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
+  const toast = useToast()
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -150,10 +154,11 @@ function Dashboard() {
     const { error } = await supabase.from('links').insert({
       user_id: user.id, title: newLink.title, url, position: links.length
     })
-    if (error) { setError(error.message) } else {
+    if (error) { setError(error.message); toast.error('Failed to add link.') } else {
       setNewLink({ title: '', url: '' })
       setAddingLink(false)
       await getLinks(user.id)
+      toast.success('Link added!')
     }
     setSaving(false)
   }
@@ -164,18 +169,20 @@ function Dashboard() {
     let url = editingLink.url
     if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
     const { error } = await supabase.from('links').update({ title: editingLink.title, url }).eq('id', editingLink.id)
-    if (!error) { setEditingLink(null); await getLinks(user.id) }
+    if (!error) { setEditingLink(null); await getLinks(user.id); toast.success('Link updated.') }
     setSaving(false)
   }
 
   const handleDeleteLink = async (id) => {
     await supabase.from('links').delete().eq('id', id)
     await getLinks(user.id)
+    toast.success('Link deleted.')
   }
 
   const handleToggleLink = async (id, active) => {
     await supabase.from('links').update({ active: !active }).eq('id', id)
     await getLinks(user.id)
+    toast.success(active ? 'Link hidden.' : 'Link visible.')
   }
 
   const handleAiApply = async (applyData) => {
@@ -253,19 +260,23 @@ function Dashboard() {
 
         <div className="dashboard__share-bar">
           <span className="dashboard__share-url">{getProfileDisplayUrl(profile?.username)}</span>
-          <button className="dashboard__mobile-preview-open" onClick={() => setMobilePreview(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-            </svg>
-            Preview
-          </button>
-          <button className="dashboard__copy-btn" onClick={() => {
-            navigator.clipboard.writeText(getProfileUrl(profile?.username))
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
-          }}>
-            {copied ? '✓ Copied!' : 'Copy link'}
-          </button>
+          <div className="dashboard__link-actions">
+            <button className="dashboard__copy-btn" onClick={() => {
+              navigator.clipboard.writeText(getProfileUrl(profile?.username))
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            }}>
+              {copied ? '✓ Copied!' : 'Copy link'}
+            </button>
+            <button className="dashboard__qr-btn" onClick={() => setQrOpen(true)} title="Get QR code">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <line x1="17" y1="17" x2="17" y2="21"/><line x1="21" y1="17" x2="17" y2="17"/><line x1="21" y1="21" x2="21" y2="17"/>
+              </svg>
+              QR
+            </button>
+          </div>
         </div>
 
         {error && <div className="dashboard__error">{error}</div>}
@@ -348,6 +359,14 @@ function Dashboard() {
         isOpen={auditOpen}
         onClose={() => setAuditOpen(false)}
       />
+
+      {qrOpen && (
+        <QRModal
+          username={profile?.username}
+          url={getProfileUrl(profile?.username)}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
 
     </DashboardLayout>
   )

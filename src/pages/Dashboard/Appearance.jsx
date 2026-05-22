@@ -6,6 +6,7 @@ import './Appearance.css'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import usePageMeta from '../../lib/usePageMeta'
+import { useToast } from '../../lib/ToastContext'
 
 function ThemeMiniPreview({ theme: t }) {
   const getBg = () => {
@@ -65,6 +66,7 @@ function Appearance() {
   const [form, setForm] = useState({ full_name: '', bio: '', theme: 'forest' })
   const [mobilePreview, setMobilePreview] = useState(false)
   const fileInputRef = useRef(null)
+  const toast = useToast()
 
   useEffect(() => { getUser() }, [])
 
@@ -102,10 +104,10 @@ function Appearance() {
     const fileExt = file.name.split('.').pop()
     const filePath = `${user.id}/avatar.${fileExt}`
     const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true })
-    if (uploadError) { alert('Upload failed: ' + uploadError.message); setUploadingAvatar(false); return }
+    if (uploadError) { toast.error('Upload failed: ' + uploadError.message); setUploadingAvatar(false); return }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath)
     const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
-    if (!updateError) setAvatarUrl(publicUrl)
+    if (!updateError) { setAvatarUrl(publicUrl); toast.success('Photo updated!') }
     setUploadingAvatar(false)
   }
 
@@ -114,7 +116,7 @@ function Appearance() {
     const { error } = await supabase.from('profiles').update({
       full_name: form.full_name, bio: form.bio, theme: form.theme
     }).eq('id', user.id)
-    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await getProfile(user.id) }
+    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await getProfile(user.id); toast.success('Changes saved!') }
     setSaving(false)
   }
 

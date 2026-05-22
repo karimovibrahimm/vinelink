@@ -1,0 +1,118 @@
+.qr__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 400;
+  animation: qr-fade 0.2s ease;
+}
+
+.qr__modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 401;
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  animation: qr-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 8px;
+}
+
+.qr__modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  margin-bottom: 3px;
+}
+
+.qr__modal-url {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.qr__modal-close {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.qr__modal-close:hover {
+  background: var(--color-background-dark);
+  color: var(--color-text);
+}
+
+.qr__modal-image {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-background-dark);
+  display: block;
+}
+
+.qr__modal-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.qr__modal-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.qr__modal-download:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.qr__modal-download:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes qr-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes qr-in {
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@media (max-width: 480px) {
+  .qr__modal {
+    max-width: calc(100vw - 32px);
+    padding: 24px 20px;
+  }
+}

@@ -11,6 +11,7 @@ import './Blocks.css'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import { getProfileUrl } from '../../lib/url'
 import usePageMeta from '../../lib/usePageMeta'
+import { useToast } from '../../lib/ToastContext'
 
 // ─── Block type config ────────────────────────────────────────────────────────
 const BLOCK_TYPES = [
@@ -235,6 +236,7 @@ function Blocks() {
   const [profile, setProfile]   = useState(null)
   const [blocks, setBlocks]     = useState([])
   usePageMeta('Creator Blocks | Vinelink', 'Add text, images, videos, music and more to your Vinelink page.')
+  const toast = useToast()
 
   const [loading, setLoading]   = useState(true)
   const [adding, setAdding]     = useState(false)
@@ -287,9 +289,10 @@ function Blocks() {
     const { error } = await supabase.from('blocks').insert({
       user_id: user.id, type, data: cleanData, position: blocks.length
     })
-    if (error) { setError(error.message) } else {
+    if (error) { setError(error.message); toast.error('Failed to add block.') } else {
       setAdding(false)
       await fetchBlocks(user.id)
+      toast.success('Block added!')
     }
     setSaving(false)
   }
@@ -301,18 +304,20 @@ function Blocks() {
     if (cleanData.link && !cleanData.link.startsWith('http')) cleanData.link = 'https://' + cleanData.link
 
     const { error } = await supabase.from('blocks').update({ data: cleanData }).eq('id', editing.id)
-    if (!error) { setEditing(null); await fetchBlocks(user.id) }
+    if (!error) { setEditing(null); await fetchBlocks(user.id); toast.success('Block updated.') }
     setSaving(false)
   }
 
   const handleDelete = async (id) => {
     await supabase.from('blocks').delete().eq('id', id)
     await fetchBlocks(user.id)
+    toast.success('Block deleted.')
   }
 
   const handleToggle = async (id, active) => {
     await supabase.from('blocks').update({ active: !active }).eq('id', id)
     await fetchBlocks(user.id)
+    toast.success(active ? 'Block hidden.' : 'Block visible.')
   }
 
   if (loading) return (
