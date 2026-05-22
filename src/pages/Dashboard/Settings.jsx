@@ -63,16 +63,22 @@ function Settings() {
   const handleUpgrade = async () => {
     setUpgrading(true)
     try {
-      const res = await fetch('/api/polar/checkout', {
+      const res  = await fetch('/api/polar/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, email: user.email }),
       })
-      const { url, error } = await res.json()
-      if (error) { toast.error(error); return }
-      window.location.href = url
-    } catch {
-      toast.error('Could not start checkout. Please try again.')
+      const text = await res.text()
+      let data
+      try { data = JSON.parse(text) } catch {
+        toast.error(`Server error (${res.status}): ${text.slice(0, 120)}`)
+        setUpgrading(false)
+        return
+      }
+      if (data.error) { toast.error(data.error); setUpgrading(false); return }
+      window.location.href = data.url
+    } catch (err) {
+      toast.error(`Checkout failed: ${err.message}`)
     }
     setUpgrading(false)
   }

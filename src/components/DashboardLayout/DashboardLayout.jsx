@@ -56,7 +56,25 @@ export default function DashboardLayout({ activePage, profile, children }) {
 
   const handleUpgrade = async () => {
     setUpgrading(true)
-    await startCheckout(profile)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const res  = await fetch('/api/polar/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      })
+      const text = await res.text()
+      let data
+      try { data = JSON.parse(text) } catch {
+        alert(`Server error (${res.status}): ${text.slice(0, 200)}`)
+        setUpgrading(false)
+        return
+      }
+      if (data.error) { alert(data.error); setUpgrading(false); return }
+      window.location.href = data.url
+    } catch (err) {
+      alert(`Checkout failed: ${err.message}`)
+    }
     setUpgrading(false)
   }
 
