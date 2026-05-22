@@ -63,24 +63,17 @@ function Settings() {
   const handleUpgrade = async () => {
     setUpgrading(true)
     try {
-      const res  = await fetch('/api/polar-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, email: user.email }),
-      })
-      const text = await res.text()
-      let data
-      try { data = JSON.parse(text) } catch {
-        toast.error(`Server error (${res.status}): ${text.slice(0, 120)}`)
-        setUpgrading(false)
-        return
-      }
-      if (data.error) { toast.error(data.error); setUpgrading(false); return }
-      window.location.href = data.url
+      const base = import.meta.env.VITE_POLAR_CHECKOUT_URL
+      if (!base) { toast.error('Checkout URL not configured.'); setUpgrading(false); return }
+      const url = new URL(base)
+      url.searchParams.set('checkout[customer_email]', user.email)
+      url.searchParams.set('checkout[metadata][user_id]', user.id)
+      url.searchParams.set('checkout[success_url]', `${window.location.origin}/dashboard?upgraded=1`)
+      window.location.href = url.toString()
     } catch (err) {
-      toast.error(`Checkout failed: ${err.message}`)
+      toast.error(`Could not open checkout: ${err.message}`)
+      setUpgrading(false)
     }
-    setUpgrading(false)
   }
 
   const handleLogout = async () => {

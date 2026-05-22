@@ -58,24 +58,17 @@ export default function DashboardLayout({ activePage, profile, children }) {
     setUpgrading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const res  = await fetch('/api/polar-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, email: user.email }),
-      })
-      const text = await res.text()
-      let data
-      try { data = JSON.parse(text) } catch {
-        alert(`Server error (${res.status}): ${text.slice(0, 200)}`)
-        setUpgrading(false)
-        return
-      }
-      if (data.error) { alert(data.error); setUpgrading(false); return }
-      window.location.href = data.url
+      const base = import.meta.env.VITE_POLAR_CHECKOUT_URL
+      if (!base) { alert('Checkout URL not configured.'); setUpgrading(false); return }
+      const url = new URL(base)
+      url.searchParams.set('checkout[customer_email]', user.email)
+      url.searchParams.set('checkout[metadata][user_id]', user.id)
+      url.searchParams.set('checkout[success_url]', `${window.location.origin}/dashboard?upgraded=1`)
+      window.location.href = url.toString()
     } catch (err) {
-      alert(`Checkout failed: ${err.message}`)
+      alert(`Could not open checkout: ${err.message}`)
+      setUpgrading(false)
     }
-    setUpgrading(false)
   }
 
   return (
