@@ -17,42 +17,29 @@ export default function AuthCallback() {
   useEffect(() => {
     let done = false
 
-    // onAuthStateChange fires once Supabase finishes processing
-    // the hash tokens — this is the reliable way to catch the session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (done) return
-        if (event === 'SIGNED_IN' && session) {
-          done = true
-          subscription.unsubscribe()
-          await redirectUser(session)
-        }
-      }
-    )
+    const handleEvent = async (event, session) => {
+      if (done) return
 
-    // Also handle PKCE code flow and already-existing sessions
-    const init = async () => {
-      const code = new URLSearchParams(window.location.search).get('code')
-      if (code) {
-        const { data: { session } } = await supabase.auth.exchangeCodeForSession(code)
-        if (session && !done) {
-          done = true
-          subscription.unsubscribe()
-          await redirectUser(session)
-          return
-        }
-      }
-
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session && !done) {
+      // Session present — redirect appropriately
+      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
         done = true
-        subscription.unsubscribe()
         await redirectUser(session)
+        return
+      }
+
+      // No session on initial check — try PKCE code exchange
+      if (event === 'INITIAL_SESSION' && !session) {
+        const code = new URLSearchParams(window.location.search).get('code')
+        if (code) {
+          done = true
+          const { data: { session: s } } = await supabase.auth.exchangeCodeForSession(code)
+          if (s) { await redirectUser(s); return }
+        }
+        window.location.href = '/login'
       }
     }
 
-    init()
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleEvent)
     return () => subscription.unsubscribe()
   }, [])
 
