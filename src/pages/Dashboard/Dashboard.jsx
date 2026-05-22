@@ -6,6 +6,7 @@ import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import ProfileAudit from '../../components/ProfileAudit/ProfileAudit'
 import { getProfileUrl, getProfileDisplayUrl } from '../../lib/url'
+import usePageMeta from '../../lib/usePageMeta'
 import {
   DndContext,
   closestCenter,
@@ -86,7 +87,11 @@ function Dashboard() {
   const [addingLink, setAddingLink] = useState(false)
   const [editingLink, setEditingLink] = useState(null)
   const [newLink, setNewLink] = useState({ title: '', url: '' })
+  usePageMeta('Links | Vinelink', 'Manage and share all your links from your Vinelink dashboard.')
+
   const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [mobilePreview, setMobilePreview] = useState(false)
   const [error, setError] = useState('')
   const [auditOpen, setAuditOpen] = useState(false)
 
@@ -101,15 +106,8 @@ function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { window.location.href = '/login'; return }
     setUser(user)
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('onboarding_done')
-      .eq('id', user.id)
-      .single()
-    if (prof && !prof.onboarding_done) {
-      window.location.href = '/onboarding'
-      return
-    }
+    const { data: prof } = await supabase.from('profiles').select('onboarding_done').eq('id', user.id).single()
+    if (prof && !prof.onboarding_done) { window.location.href = '/onboarding'; return }
     await getProfile(user.id)
     await getLinks(user.id)
     await getBlocks(user.id)
@@ -199,7 +197,7 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <DashboardLayout activePage="links" profile={null}>
+      <DashboardLayout activePage="links" profile={profile}>
         <main className="dashboard__main">
           <div className="dashboard__header">
             <div>
@@ -255,8 +253,18 @@ function Dashboard() {
 
         <div className="dashboard__share-bar">
           <span className="dashboard__share-url">{getProfileDisplayUrl(profile?.username)}</span>
-          <button className="dashboard__copy-btn" onClick={() => navigator.clipboard.writeText(getProfileUrl(profile?.username))}>
-            Copy link
+          <button className="dashboard__mobile-preview-open" onClick={() => setMobilePreview(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+            </svg>
+            Preview
+          </button>
+          <button className="dashboard__copy-btn" onClick={() => {
+            navigator.clipboard.writeText(getProfileUrl(profile?.username))
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+          }}>
+            {copied ? '✓ Copied!' : 'Copy link'}
           </button>
         </div>
 
@@ -318,6 +326,20 @@ function Dashboard() {
       />
 
       <AiAssistant user={user} profile={profile} links={links} onApply={handleAiApply}/>
+
+      {mobilePreview && (
+        <div className="mobile-preview__overlay" onClick={() => setMobilePreview(false)}>
+          <div className="mobile-preview__sheet" onClick={e => e.stopPropagation()}>
+            <button className="mobile-preview__close" onClick={() => setMobilePreview(false)}>✕ Close</button>
+            <PhonePreview
+              profile={profile}
+              links={activeLinks}
+              blocks={activeBlocks}
+              themeObj={getThemeById(profile?.theme)}
+            />
+          </div>
+        </div>
+      )}
 
       <ProfileAudit
         profile={profile}

@@ -10,6 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import './Blocks.css'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import { getProfileUrl } from '../../lib/url'
+import usePageMeta from '../../lib/usePageMeta'
 
 // ─── Block type config ────────────────────────────────────────────────────────
 const BLOCK_TYPES = [
@@ -233,6 +234,8 @@ function Blocks() {
   const [user, setUser]         = useState(null)
   const [profile, setProfile]   = useState(null)
   const [blocks, setBlocks]     = useState([])
+  usePageMeta('Creator Blocks | Vinelink', 'Add text, images, videos, music and more to your Vinelink page.')
+
   const [loading, setLoading]   = useState(true)
   const [adding, setAdding]     = useState(false)
   const [editing, setEditing]   = useState(null)
@@ -313,7 +316,7 @@ function Blocks() {
   }
 
   if (loading) return (
-    <DashboardLayout activePage="blocks" profile={null}>
+    <DashboardLayout activePage="blocks" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">
           <div className="sk" style={{ height: 26, width: 160 }}/>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getThemeById } from '../../lib/themes'
+import usePageMeta from '../../lib/usePageMeta'
 import './Onboarding.css'
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
@@ -70,6 +71,8 @@ function VariantCard({ variant, avatarPreview, selected, onSelect }) {
 }
 
 function Onboarding({ user, profile, onComplete }) {
+  usePageMeta('Set Up Your Page | Vinelink', 'Set up your Vinelink page with AI in seconds.')
+
   // Google OAuth users have no username — they start at step 0
   const isGoogleUser = !profile?.username
 

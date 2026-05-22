@@ -5,6 +5,7 @@ import { getThemeById } from '../../lib/themes'
 import './Appearance.css'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import usePageMeta from '../../lib/usePageMeta'
 
 function ThemeMiniPreview({ theme: t }) {
   const getBg = () => {
@@ -54,12 +55,15 @@ function Appearance() {
   const [profile, setProfile] = useState(null)
   const [links, setLinks] = useState([])
   const [loading, setLoading] = useState(true)
+  usePageMeta('Appearance | Vinelink', 'Customize your Vinelink page theme, bio, and profile photo.')
+
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [form, setForm] = useState({ full_name: '', bio: '', theme: 'forest' })
+  const [mobilePreview, setMobilePreview] = useState(false)
   const fileInputRef = useRef(null)
 
   useEffect(() => { getUser() }, [])
@@ -110,7 +114,7 @@ function Appearance() {
     const { error } = await supabase.from('profiles').update({
       full_name: form.full_name, bio: form.bio, theme: form.theme
     }).eq('id', user.id)
-    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await getProfile(user.id) }
     setSaving(false)
   }
 
@@ -118,7 +122,7 @@ function Appearance() {
   const displayAvatar = avatarPreview || avatarUrl
 
   if (loading) return (
-    <DashboardLayout activePage="appearance" profile={null}>
+    <DashboardLayout activePage="appearance" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">
           <div className="sk" style={{ height: 26, width: 160 }}/>
@@ -150,9 +154,17 @@ function Appearance() {
             <h1 className="dashboard__title">Appearance</h1>
             <p className="dashboard__subtitle">Customize how your Vinelink page looks</p>
           </div>
-          <button className="dashboard__add-btn" onClick={handleSave} disabled={saving}>
-            {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save changes'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="dashboard__mobile-preview-open" onClick={() => setMobilePreview(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+              </svg>
+              Preview
+            </button>
+            <button className="dashboard__add-btn" onClick={handleSave} disabled={saving}>
+              {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save changes'}
+            </button>
+          </div>
         </div>
 
         <div className="appearance__section">
@@ -216,6 +228,19 @@ function Appearance() {
         links={links}
         themeObj={activeTheme}
       />
+
+      {mobilePreview && (
+        <div className="mobile-preview__overlay" onClick={() => setMobilePreview(false)}>
+          <div className="mobile-preview__sheet" onClick={e => e.stopPropagation()}>
+            <button className="mobile-preview__close" onClick={() => setMobilePreview(false)}>✕ Close</button>
+            <PhonePreview
+              profile={{ ...profile, full_name: form.full_name, bio: form.bio, avatar_url: avatarPreview || avatarUrl }}
+              links={links}
+              themeObj={activeTheme}
+            />
+          </div>
+        </div>
+      )}
 
     </DashboardLayout>
   )

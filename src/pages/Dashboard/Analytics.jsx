@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import usePageMeta from '../../lib/usePageMeta'
 import './Analytics.css'
 
 function Analytics() {
@@ -9,6 +10,8 @@ function Analytics() {
   const [links, setLinks] = useState([])
   const [clicks, setClicks] = useState([])
   const [loading, setLoading] = useState(true)
+  usePageMeta('Analytics | Vinelink', 'Track link clicks and page performance on your Vinelink dashboard.')
+
   const [period, setPeriod] = useState(7)
   const [transitioning, setTransitioning] = useState(false)
 
@@ -75,7 +78,7 @@ function Analytics() {
   const totalClicks = clicks.length
 
   if (loading) return (
-    <DashboardLayout activePage="analytics" profile={null}>
+    <DashboardLayout activePage="analytics" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">
           <div className="sk" style={{ height: 26, width: 120 }}/>

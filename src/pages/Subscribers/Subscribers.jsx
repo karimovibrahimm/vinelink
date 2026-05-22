@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import './Subscribers.css'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import usePageMeta from '../../lib/usePageMeta'
 
 function Subscribers() {
   const [user, setUser]       = useState(null)
   const [profile, setProfile] = useState(null)
-  const [groups, setGroups]   = useState([])   // [{ block, subscribers[] }]
+  usePageMeta('Subscribers | Vinelink', 'View and manage your newsletter subscribers on Vinelink.')
+
+  const [groups, setGroups]   = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { init() }, [])
@@ -71,7 +74,7 @@ function Subscribers() {
   const totalSubs = groups.reduce((acc, g) => acc + g.subscribers.length, 0)
 
   if (loading) return (
-    <DashboardLayout activePage="subscribers" profile={null}>
+    <DashboardLayout activePage="subscribers" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">
           <div className="sk" style={{ height: 26, width: 150 }}/>

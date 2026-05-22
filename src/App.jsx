@@ -4,6 +4,7 @@ import Landing from './pages/Landing/Landing'
 import Signup from './pages/Auth/Signup'
 import Login from './pages/Auth/Login'
 import ForgotPassword from './pages/Auth/ForgotPassword'
+import ResetPassword from './pages/Auth/ResetPassword'
 import AuthCallback from './pages/Auth/AuthCallback'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Appearance from './pages/Dashboard/Appearance'
@@ -51,61 +52,50 @@ function OnboardingWrapper() {
 
 function App() {
   // Intercept Supabase hash-based auth tokens that land on the root URL.
-  // Only redirect if NOT already on /auth/callback — otherwise we cause a loop.
-  const hash = window.location.hash
-  if (
-    window.location.pathname !== '/auth/callback' &&
-    (hash.includes('access_token=') || hash.includes('error_description='))
-  ) {
-    window.location.replace('/auth/callback' + hash)
-    return null
+  const hash     = window.location.hash
+  const pathname = window.location.pathname
+  if (pathname !== '/auth/callback' && pathname !== '/reset-password') {
+    if (hash.includes('access_token=') || hash.includes('error_description=')) {
+      const dest = hash.includes('type=recovery') ? '/reset-password' : '/auth/callback'
+      window.location.replace(dest + hash)
+      return null
+    }
   }
 
   const [subdomain, setSubdomain] = useState(null)
-  const [checking, setChecking] = useState(true)
+  const [checking, setChecking]   = useState(true)
 
   useEffect(() => {
-    const host = window.location.hostname
-    const parts = host.split('.')
-    
-    // Check if there is a subdomain (e.g., ibrahim.vinelink.xyz has 3 parts)
-    // We ignore 'www' so the main landing page still works.
-    if (parts.length >= 3 && parts[0] !== 'www') {
-      setSubdomain(parts[0])
-    }
+    const parts = window.location.hostname.split('.')
+    if (parts.length >= 3 && parts[0] !== 'www') setSubdomain(parts[0])
     setChecking(false)
   }, [])
 
   if (checking) return null
+  if (subdomain) return <Profile customUsername={subdomain} />
 
-  // THE HIJACK: If a subdomain exists, ONLY render the Profile.
-  // We pass it as a custom prop so Profile knows who to look for.
-  if (subdomain) {
-    return <Profile customUsername={subdomain} />
-  }
-
-  // Otherwise, render the standard application routing.
   return (
     <BrowserRouter>
       <div className="app">
         <Routes>
-          <Route path="/" element={<><Navbar /><Landing /></>} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/onboarding" element={<OnboardingWrapper />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/"                    element={<><Navbar /><Landing /></>} />
+          <Route path="/signup"              element={<Signup />} />
+          <Route path="/login"               element={<Login />} />
+          <Route path="/forgot-password"     element={<ForgotPassword />} />
+          <Route path="/reset-password"      element={<ResetPassword />} />
+          <Route path="/auth/callback"       element={<AuthCallback />} />
+          <Route path="/onboarding"          element={<OnboardingWrapper />} />
+          <Route path="/dashboard"           element={<Dashboard />} />
           <Route path="/dashboard/appearance" element={<Appearance />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
-          <Route path="/dashboard/settings" element={<Settings />} />
-          <Route path="/dashboard/blocks" element={<Blocks />} />
+          <Route path="/dashboard/settings"  element={<Settings />} />
+          <Route path="/dashboard/blocks"    element={<Blocks />} />
           <Route path="/dashboard/subscribers" element={<Subscribers />} />
-          <Route path="/:username" element={<Profile />} />
+          <Route path="/:username"           element={<Profile />} />
         </Routes>
       </div>
     </BrowserRouter>
   )
 }
 
-export default App;
+export default App

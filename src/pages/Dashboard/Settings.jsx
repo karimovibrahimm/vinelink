@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import usePageMeta from '../../lib/usePageMeta'
 import './Settings.css'
 
 function Settings() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  usePageMeta('Settings | Vinelink', 'Manage your Vinelink account settings, email, and password.')
+
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [emailPending, setEmailPending] = useState(false)
   const [error, setError] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [form, setForm] = useState({ email: '', newPassword: '', confirmPassword: '' })
@@ -33,7 +37,7 @@ function Settings() {
     setSaving(true)
     setError('')
     const { error } = await supabase.auth.updateUser({ email: form.email })
-    if (error) { setError(error.message) } else { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+    if (error) { setError(error.message) } else { setEmailPending(true) }
     setSaving(false)
   }
 
@@ -61,24 +65,23 @@ function Settings() {
     window.location.href = '/'
   }
 
-  if (loading) {
-    return (
-      <DashboardLayout activePage="settings" profile={null}>
-        <main className="dashboard__main">
-          <div className="dashboard__header">
-            <div className="sk" style={{ height: 26, width: 110 }}/>
+
+  if (loading) return (
+    <DashboardLayout activePage="settings" profile={null}>
+      <main className="dashboard__main">
+        <div className="dashboard__header">
+          <div className="sk" style={{ height: 26, width: 110 }}/>
+        </div>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} style={{ marginTop: 36 }}>
+            <div className="sk" style={{ height: 16, width: 130, marginBottom: 18 }}/>
+            <div className="sk" style={{ height: 44, marginBottom: 12 }}/>
+            <div className="sk" style={{ height: 44 }}/>
           </div>
-          {[...Array(3)].map((_, i) => (
-            <div key={i} style={{ marginTop: 36 }}>
-              <div className="sk" style={{ height: 16, width: 130, marginBottom: 18 }}/>
-              <div className="sk" style={{ height: 44, marginBottom: 12 }}/>
-              <div className="sk" style={{ height: 44 }}/>
-            </div>
-          ))}
-        </main>
-      </DashboardLayout>
-    )
-  }
+        ))}
+      </main>
+    </DashboardLayout>
+  )
 
   return (
     <DashboardLayout activePage="settings" profile={profile}>
@@ -112,12 +115,17 @@ function Settings() {
                 className="dashboard__input"
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => { setForm({ ...form, email: e.target.value }); setEmailPending(false) }}
               />
               <button className="settings__save-btn" onClick={handleUpdateEmail} disabled={saving}>
                 Update
               </button>
             </div>
+            {emailPending && (
+              <span className="settings__hint" style={{ color: '#2563eb' }}>
+                ✉️ Confirmation sent to <strong>{form.email}</strong> — click the link to confirm.
+              </span>
+            )}
           </div>
         </div>
 

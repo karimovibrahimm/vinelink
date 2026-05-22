@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import usePageMeta from '../../lib/usePageMeta'
 import './Auth.css'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function Signup() {
+  usePageMeta('Sign Up Free | Vinelink', 'Create your free Vinelink page. No credit card needed. Set up in 2 minutes.')
+
   const [form, setForm] = useState({ username: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)

@@ -180,6 +180,15 @@ function Profile({ customUsername }) {
 
     if (linksData)  setLinks(linksData)
     if (blocksData) setBlocks(blocksData)
+
+    const title = profileData.full_name
+      ? `${profileData.full_name} (@${profileData.username}) | Vinelink`
+      : `@${profileData.username} | Vinelink`
+    const desc = profileData.bio || `Check out ${profileData.username}'s links on Vinelink.`
+    document.title = title
+    const meta = document.querySelector('meta[name="description"]')
+    if (meta) meta.content = desc
+
     setLoading(false)
   }
 
@@ -207,15 +216,23 @@ function Profile({ customUsername }) {
     </div>
   )
 
-  if (notFound) return (
-    <div className="profile__notfound">
-      <div className="profile__notfound-icon">🌿</div>
-      <h1>Page not found</h1>
-      <p>The Vinelink <strong>@{username}</strong> doesn't exist yet.</p>
-      <a href="/signup" className="profile__notfound-btn">Create your own Vinelink</a>
-      <a href="/" className="profile__notfound-home">← Back to Vinelink</a>
-    </div>
-  )
+  if (notFound) {
+    const parts = window.location.hostname.split('.')
+    const isSubdomain = parts.length >= 3 && parts[0] !== 'www'
+    const mainUrl = isSubdomain
+      ? `https://${parts.slice(1).join('.')}`
+      : window.location.origin
+
+    return (
+      <div className="profile__notfound">
+        <div className="profile__notfound-icon">🌿</div>
+        <h1>Page not found</h1>
+        <p>The Vinelink <strong>@{username}</strong> doesn't exist yet.</p>
+        <a href={`${mainUrl}/signup`} className="profile__notfound-btn">Create your own Vinelink</a>
+        <a href={mainUrl} className="profile__notfound-home">← Back to Vinelink</a>
+      </div>
+    )
+  }
 
   const theme = getThemeById(profile.theme)
   const isDark = theme.style === 'dark'

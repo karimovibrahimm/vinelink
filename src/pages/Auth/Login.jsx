@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import usePageMeta from '../../lib/usePageMeta'
 import './Auth.css'
 
 function Login() {
+  usePageMeta('Log In | Vinelink', 'Log in to manage your Vinelink page.')
+
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -17,11 +20,16 @@ function Login() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    })
-    if (error) { setError(error.message) } else { window.location.href = '/dashboard' }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      })
+      if (error) { setError(error.message) }
+      else        { window.location.href = '/dashboard' }
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.')
+    }
     setLoading(false)
   }
 

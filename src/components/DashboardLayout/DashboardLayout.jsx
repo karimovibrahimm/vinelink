@@ -62,10 +62,15 @@ export default function DashboardLayout({ activePage, profile, children }) {
         <div className="dashboard__sidebar-bottom">
           <div className="dashboard__profile-pill">
             <div className="dashboard__profile-avatar">
-              {profile?.username?.[0]?.toUpperCase() || 'U'}
+              {profile?.avatar_url
+                ? <img src={profile.avatar_url} alt="avatar" />
+                : profile?.username?.[0]?.toUpperCase() || 'U'
+              }
             </div>
             <div className="dashboard__profile-info">
-              <div className="dashboard__profile-name">@{profile?.username}</div>
+              <div className="dashboard__profile-name">
+                {profile?.username ? `@${profile.username}` : '—'}
+              </div>
               <div className="dashboard__profile-plan">Premium Plan for Free!</div>
             </div>
           </div>
