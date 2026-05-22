@@ -5,6 +5,7 @@ import { getThemeById } from '../../lib/themes'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import ProfileAudit from '../../components/ProfileAudit/ProfileAudit'
+import { getProfileUrl, getProfileDisplayUrl } from '../../lib/url'
 import {
   DndContext,
   closestCenter,
@@ -234,7 +235,7 @@ function Dashboard() {
               </svg>
               <span>Audit page</span>
             </button>
-            <a href={`https://${profile?.username}.vinelink.xyz`} target="_blank" rel="noreferrer" className="dashboard__preview-btn" title="Preview page">
+            <a href={getProfileUrl(profile?.username)} target="_blank" rel="noreferrer" className="dashboard__preview-btn" title="Preview page">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
@@ -253,8 +254,8 @@ function Dashboard() {
         </div>
 
         <div className="dashboard__share-bar">
-          <span className="dashboard__share-url">{profile?.username}.vinelink.xyz</span>
-          <button className="dashboard__copy-btn" onClick={() => navigator.clipboard.writeText(`https://${profile?.username}.vinelink.xyz`)}>
+          <span className="dashboard__share-url">{getProfileDisplayUrl(profile?.username)}</span>
+          <button className="dashboard__copy-btn" onClick={() => navigator.clipboard.writeText(getProfileUrl(profile?.username))}>
             Copy link
           </button>
         </div>

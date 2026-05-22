@@ -145,12 +145,9 @@ function Onboarding({ user, profile, onComplete }) {
   }
 
   const handleSkip = async () => {
-    // Google users already confirmed their username in step 0
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      ...(isGoogleUser && { username: usernameInput.trim() }),
-      onboarding_done: true,
-    })
+    const update = { onboarding_done: true }
+    if (isGoogleUser) update.username = usernameInput.trim()
+    await supabase.from('profiles').update(update).eq('id', user.id)
     onComplete()
   }
 
@@ -241,15 +238,14 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       }
     }
 
-    await supabase.from('profiles').upsert({
-      id: user.id,
+    await supabase.from('profiles').update({
       ...(isGoogleUser && { username: usernameInput.trim() }),
       full_name: chosen.full_name,
       bio: chosen.bio,
       theme: chosen.theme,
       onboarding_done: true,
       ...(avatarUrl && { avatar_url: avatarUrl }),
-    })
+    }).eq('id', user.id)
 
     if (chosen.links?.length > 0) {
       await supabase.from('links').insert(

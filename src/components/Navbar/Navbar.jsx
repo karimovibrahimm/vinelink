@@ -8,8 +8,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar__container">
 
-        {/* Logo */}
-        <a href="https://vinelink.xyz" className="navbar__logo">
+        <a href="/" className="navbar__logo">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
             <path d="M14 4 C14 4 8 8 8 14 C8 18 10 21 14 24 C18 21 20 18 20 14 C20 8 14 4 14 4Z" fill="#c9a84c"/>
             <path d="M14 24 C14 24 10 20 8 16 C10 17 13 17 14 24Z" fill="#1a3a2a"/>
@@ -19,19 +18,16 @@ function Navbar() {
           <span>Vinelink</span>
         </a>
 
-        {/* Desktop Nav */}
         <ul className="navbar__links">
-          <li><a href="https://vinelink.xyz/#features">Features</a></li>
-          <li><a href="https://vinelink.xyz/#examples">Examples</a></li>
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#examples">Examples</a></li>
         </ul>
 
-        {/* CTA */}
         <div className="navbar__actions">
-          <a href="https://vinelink.xyz/login" className="navbar__login">Log in</a>
-          <a href="https://vinelink.xyz/signup" className="navbar__cta">Get Started Free</a>
+          <a href="/login" className="navbar__login">Log in</a>
+          <a href="/signup" className="navbar__cta">Get Started Free</a>
         </div>
 
-        {/* Mobile hamburger */}
         <button className="navbar__hamburger" onClick={() => setMenuOpen(!menuOpen)}>
           <span></span>
           <span></span>
@@ -39,14 +35,13 @@ function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {menuOpen && (
         <div className="navbar__mobile">
-          <a href="https://vinelink.xyz/#features" onClick={() => setMenuOpen(false)}>Features</a>
-          <a href="https://vinelink.xyz/#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
-          <a href="https://vinelink.xyz/#examples" onClick={() => setMenuOpen(false)}>Examples</a>
-          <a href="https://vinelink.xyz/login" onClick={() => setMenuOpen(false)}>Log in</a>
-          <a href="https://vinelink.xyz/signup" className="navbar__cta" onClick={() => setMenuOpen(false)}>Get Started Free</a>
+          <a href="/#features" onClick={() => setMenuOpen(false)}>Features</a>
+          <a href="/#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
+          <a href="/#examples" onClick={() => setMenuOpen(false)}>Examples</a>
+          <a href="/login" onClick={() => setMenuOpen(false)}>Log in</a>
+          <a href="/signup" className="navbar__cta" onClick={() => setMenuOpen(false)}>Get Started Free</a>
         </div>
       )}
     </nav>

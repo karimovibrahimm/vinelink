@@ -9,6 +9,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import './Blocks.css'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import { getProfileUrl } from '../../lib/url'
 
 // ─── Block type config ────────────────────────────────────────────────────────
 const BLOCK_TYPES = [
@@ -335,7 +336,7 @@ function Blocks() {
             <p className="dashboard__subtitle">Add text, images, videos, and more to your page</p>
           </div>
           <div className="dashboard__header-actions">
-            <a href={`https://${profile?.username}.vinelink.xyz`} target="_blank" rel="noreferrer" className="dashboard__preview-btn">
+            <a href={getProfileUrl(profile?.username)} target="_blank" rel="noreferrer" className="dashboard__preview-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
