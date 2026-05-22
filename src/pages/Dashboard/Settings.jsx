@@ -12,6 +12,7 @@ function Settings() {
   usePageMeta('Settings | Vinelink', 'Manage your Vinelink account settings, email, and password.')
 
   const toast = useToast()
+  const [upgrading, setUpgrading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [emailPending, setEmailPending] = useState(false)
@@ -57,6 +58,23 @@ function Settings() {
       toast.success('Password updated!')
     }
     setSaving(false)
+  }
+
+  const handleUpgrade = async () => {
+    setUpgrading(true)
+    try {
+      const res = await fetch('/api/polar/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      })
+      const { url, error } = await res.json()
+      if (error) { toast.error(error); return }
+      window.location.href = url
+    } catch {
+      toast.error('Could not start checkout. Please try again.')
+    }
+    setUpgrading(false)
   }
 
   const handleLogout = async () => {
@@ -131,6 +149,31 @@ function Settings() {
               </span>
             )}
           </div>
+        </div>
+
+        {/* Plan */}
+        <div className="settings__section">
+          <h2 className="settings__section-title">Plan</h2>
+          {profile?.plan === 'pro' ? (
+            <div className="settings__plan-pro">
+              <div className="settings__plan-badge">⚡ Pro</div>
+              <div className="settings__plan-desc">You're on the Pro plan. Thank you for supporting Vinelink!</div>
+            </div>
+          ) : (
+            <div className="settings__plan-free">
+              <div className="settings__plan-info">
+                <div className="settings__plan-badge settings__plan-badge--free">Free</div>
+                <div className="settings__plan-desc">Upgrade to Pro to unlock unlimited links, advanced analytics, and more.</div>
+              </div>
+              <button
+                className="settings__upgrade-btn"
+                onClick={handleUpgrade}
+                disabled={upgrading}
+              >
+                {upgrading ? 'Loading…' : '⚡ Upgrade to Pro'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Password */}

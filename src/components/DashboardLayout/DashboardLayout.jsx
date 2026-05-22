@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import '../../pages/Dashboard/Dashboard.css'
 
@@ -33,7 +34,32 @@ const logout = async () => {
   window.location.href = '/'
 }
 
+async function startCheckout(profile) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    const res = await fetch('/api/polar/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, email: user.email }),
+    })
+    const { url, error } = await res.json()
+    if (error) { alert(error); return }
+    window.location.href = url
+  } catch {
+    alert('Could not start checkout. Please try again.')
+  }
+}
+
 export default function DashboardLayout({ activePage, profile, children }) {
+  const [upgrading, setUpgrading] = useState(false)
+  const isPro = profile?.plan === 'pro'
+
+  const handleUpgrade = async () => {
+    setUpgrading(true)
+    await startCheckout(profile)
+    setUpgrading(false)
+  }
+
   return (
     <div className="dashboard">
 
@@ -71,9 +97,16 @@ export default function DashboardLayout({ activePage, profile, children }) {
               <div className="dashboard__profile-name">
                 {profile?.username ? `@${profile.username}` : '—'}
               </div>
-              <div className="dashboard__profile-plan">Premium Plan for Free!</div>
+              <div className={`dashboard__profile-plan${isPro ? ' dashboard__profile-plan--pro' : ''}`}>
+                {isPro ? '⚡ Pro' : 'Free plan'}
+              </div>
             </div>
           </div>
+          {!isPro && (
+            <button className="dashboard__upgrade-btn" onClick={handleUpgrade} disabled={upgrading}>
+              {upgrading ? 'Loading…' : '⚡ Upgrade to Pro'}
+            </button>
+          )}
           <button className="dashboard__logout" onClick={logout}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

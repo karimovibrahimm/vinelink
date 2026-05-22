@@ -5,6 +5,7 @@
       "has": [{ "type": "host", "value": "[^.]+\\.vinelink\\.xyz" }],
       "destination": "/api/profile"
     },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "functions": {
