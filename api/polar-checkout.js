@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const { userId, email } = body
 
     if (!process.env.POLAR_ACCESS_TOKEN) return res.status(500).json({ error: 'POLAR_ACCESS_TOKEN not set' })
-    if (!process.env.POLAR_PRICE_ID)     return res.status(500).json({ error: 'POLAR_PRICE_ID not set' })
+    if (!process.env.POLAR_PRODUCT_ID)   return res.status(500).json({ error: 'POLAR_PRODUCT_ID not set' })
     if (!userId || !email)               return res.status(400).json({ error: 'Missing userId or email' })
 
     const response = await fetch('https://api.polar.sh/v1/checkouts', {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        product_price_id: process.env.POLAR_PRICE_ID,
+        product_id: process.env.POLAR_PRODUCT_ID,
         success_url: `${process.env.VITE_SITE_URL || 'https://vinelink.xyz'}/dashboard?upgraded=1`,
         customer_email: email,
         metadata: { user_id: userId },

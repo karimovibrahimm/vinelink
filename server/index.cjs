@@ -9,12 +9,12 @@ app.use(express.json())
 app.post('/api/polar-checkout', async (req, res) => {
   const { userId, email } = req.body || {}
   if (!userId || !email) return res.status(400).json({ error: 'Missing userId or email' })
-  if (!process.env.POLAR_ACCESS_TOKEN || !process.env.POLAR_PRICE_ID) {
-    return res.status(500).json({ error: 'Missing POLAR_ACCESS_TOKEN or POLAR_PRICE_ID' })
+  if (!process.env.POLAR_ACCESS_TOKEN || !process.env.POLAR_PRODUCT_ID) {
+    return res.status(500).json({ error: 'Missing POLAR_ACCESS_TOKEN or POLAR_PRODUCT_ID' })
   }
 
   const payload = JSON.stringify({
-    product_price_id: process.env.POLAR_PRICE_ID,
+    product_id: process.env.POLAR_PRODUCT_ID,
     success_url: `${process.env.VITE_SITE_URL || 'http://localhost:5173'}/dashboard?upgraded=1`,
     customer_email: email,
     metadata: { user_id: userId },
