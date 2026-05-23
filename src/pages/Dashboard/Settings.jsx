@@ -63,13 +63,18 @@ function Settings() {
   const handleUpgrade = async () => {
     setUpgrading(true)
     try {
-      const base = import.meta.env.VITE_POLAR_CHECKOUT_URL
-      if (!base) { toast.error('Checkout URL not configured.'); setUpgrading(false); return }
-      const url = new URL(base)
-      url.searchParams.set('checkout[customer_email]', user.email)
-      url.searchParams.set('checkout[metadata][user_id]', user.id)
-      url.searchParams.set('checkout[success_url]', `${window.location.origin}/dashboard?upgraded=1`)
-      window.location.href = url.toString()
+      const res = await fetch('/api/polar-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      })
+      const json = await res.json()
+      if (json.url) {
+        window.location.href = json.url
+      } else {
+        toast.error(json.error || 'Could not open checkout.')
+        setUpgrading(false)
+      }
     } catch (err) {
       toast.error(`Could not open checkout: ${err.message}`)
       setUpgrading(false)
@@ -162,7 +167,7 @@ function Settings() {
                 </div>
               </div>
               <a
-                href="https://polar.sh/settings/subscriptions"
+                href="https://polar.sh/purchases/subscriptions"
                 target="_blank"
                 rel="noreferrer"
                 className="settings__manage-btn"
