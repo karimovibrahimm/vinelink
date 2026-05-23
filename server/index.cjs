@@ -22,7 +22,7 @@ app.post('/api/polar-checkout', async (req, res) => {
 
   try {
     const result = await new Promise((resolve, reject) => {
-      const u   = new URL('https://api.polar.sh/v1/checkouts/custom')
+      const u   = new URL('https://api.polar.sh/v1/checkouts')
       const req = https.request(
         { hostname: u.hostname, path: u.pathname, method: 'POST',
           headers: { Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },

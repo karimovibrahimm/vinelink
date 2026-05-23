@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     if (!process.env.POLAR_PRICE_ID)     return res.status(500).json({ error: 'POLAR_PRICE_ID not set' })
     if (!userId || !email)               return res.status(400).json({ error: 'Missing userId or email' })
 
-    const response = await fetch('https://api.polar.sh/v1/checkouts/custom', {
+    const response = await fetch('https://api.polar.sh/v1/checkouts', {
       method: 'POST',
       headers: {
         Authorization:  `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
