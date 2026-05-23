@@ -26,9 +26,12 @@ module.exports = async (req, res) => {
     })
 
     const data = await response.json()
-    if (!response.ok) return res.status(500).json({ error: data.detail || 'Failed to create portal session' })
+    if (!response.ok) return res.status(500).json({ error: data.detail || JSON.stringify(data) })
 
-    res.json({ url: data.customer_portal_url })
+    const url = data.customer_portal_url || data.url
+    if (!url) return res.status(500).json({ error: `Polar returned: ${JSON.stringify(data)}` })
+
+    res.json({ url })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
