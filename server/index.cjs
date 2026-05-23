@@ -57,24 +57,26 @@ app.post('/api/polar-portal', async (req, res) => {
   if (error || !user) return res.status(401).json({ error: 'Unauthorized' })
 
   try {
-    const payload = JSON.stringify({ customer_email: user.email })
-    const result = await new Promise((resolve, reject) => {
-      const u = new URL('https://api.polar.sh/v1/customer-sessions')
-      const r = https.request(
-        { hostname: u.hostname, path: u.pathname, method: 'POST',
-          headers: { Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
-        (resp) => { let raw = ''; resp.on('data', c => raw += c); resp.on('end', () => { try { resolve({ status: resp.statusCode, body: JSON.parse(raw) }) } catch { resolve({ status: resp.statusCode, body: raw }) } }) }
-      )
-      r.on('error', reject)
-      r.write(payload)
-      r.end()
+    const response = await fetch('https://api.polar.sh/v1/customer-sessions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ customer_email: user.email }),
     })
 
-    if (result.status >= 400) {
-      const detail = typeof result.body === 'object' ? (result.body.detail || result.body.message || JSON.stringify(result.body)) : String(result.body)
-      return res.status(400).json({ error: `Polar: ${detail}` })
+    const data = await response.json()
+    console.log('[polar-portal] status:', response.status, 'body:', JSON.stringify(data))
+
+    if (!response.ok) {
+      const detail = data.detail || data.message || JSON.stringify(data)
+      return res.status(400).json({ error: `Polar ${response.status}: ${detail}` })
     }
-    res.json({ url: result.body.customer_portal_url })
+
+    const url = data.customer_portal_url || data.url
+    if (!url) return res.status(500).json({ error: `Polar ${response.status}: ${JSON.stringify(data)}` })
+    res.json({ url })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
