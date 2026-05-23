@@ -1,9 +1,47 @@
 const express    = require('express')
+const https      = require('https')
 const { Resend } = require('resend')
 const { createClient } = require('@supabase/supabase-js')
 
 const app = express()
 app.use(express.json())
+
+app.post('/api/polar-checkout', async (req, res) => {
+  const { userId, email } = req.body || {}
+  if (!userId || !email) return res.status(400).json({ error: 'Missing userId or email' })
+  if (!process.env.POLAR_ACCESS_TOKEN || !process.env.POLAR_PRICE_ID) {
+    return res.status(500).json({ error: 'Missing POLAR_ACCESS_TOKEN or POLAR_PRICE_ID' })
+  }
+
+  const payload = JSON.stringify({
+    product_price_id: process.env.POLAR_PRICE_ID,
+    success_url: `${process.env.VITE_SITE_URL || 'http://localhost:5173'}/dashboard?upgraded=1`,
+    customer_email: email,
+    metadata: { user_id: userId },
+  })
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const u   = new URL('https://api.polar.sh/v1/checkouts/custom')
+      const req = https.request(
+        { hostname: u.hostname, path: u.pathname, method: 'POST',
+          headers: { Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+        (r) => { let raw = ''; r.on('data', c => raw += c); r.on('end', () => { try { resolve({ status: r.statusCode, body: JSON.parse(raw) }) } catch { resolve({ status: r.statusCode, body: raw }) } }) }
+      )
+      req.on('error', reject)
+      req.write(payload)
+      req.end()
+    })
+
+    if (result.status >= 400) {
+      const detail = typeof result.body === 'object' ? (result.body.detail || result.body.message || JSON.stringify(result.body)) : String(result.body)
+      return res.status(400).json({ error: `Polar: ${detail}` })
+    }
+    res.json({ url: result.body.url })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
 app.post('/api/send-newsletter', async (req, res) => {
   const { blockId, subject, body, token } = req.body || {}

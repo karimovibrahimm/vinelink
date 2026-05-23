@@ -8,14 +8,20 @@ function UpgradeModal({ title, message, onClose }) {
   const handleUpgrade = async () => {
     setLoading(true)
     try {
-      const base = import.meta.env.VITE_POLAR_CHECKOUT_URL
-      if (!base) { setLoading(false); return }
       const { data: { user } } = await supabase.auth.getUser()
-      const url = new URL(base)
-      if (user?.email) url.searchParams.set('checkout[customer_email]', user.email)
-      if (user?.id) url.searchParams.set('checkout[metadata][user_id]', user.id)
-      url.searchParams.set('checkout[success_url]', `${window.location.origin}/dashboard?upgraded=1`)
-      window.location.href = url.toString()
+      if (!user) { setLoading(false); return }
+      const res = await fetch('/api/polar-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      })
+      const json = await res.json()
+      if (json.url) {
+        window.location.href = json.url
+      } else {
+        console.error('Checkout error:', json.error)
+        setLoading(false)
+      }
     } catch {
       setLoading(false)
     }

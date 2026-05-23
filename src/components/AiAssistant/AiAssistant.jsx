@@ -81,8 +81,11 @@ function AiAssistant({ user, profile, links, onApply }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  const buildContext = () =>
-    `The user's current Vinelink profile:
+  const buildContext = () => {
+    const isPro = profile?.plan === 'pro'
+    const freeThemes = 'forest, ocean, rose, sand, slate, paper, earth, sunset, lavender'
+    const allThemes  = 'forest, ocean, rose, sand, slate, paper, earth, sunset, lavender, midnight, neon, aurora, glass, candy'
+    return `The user's current Vinelink profile:
 - Username: @${profile?.username}
 - Display name: ${profile?.full_name || 'not set'}
 - Bio: ${profile?.bio || 'not set'}
@@ -95,7 +98,7 @@ RULES:
 1. Keep response text SHORT — 2-4 sentences max. Be friendly and direct.
 2. Whenever you suggest ANY change to bio, name, theme, or link titles — ALWAYS include an <apply> block. Do NOT wait for the user to ask.
 3. Put the <apply> block at the very END of your response, after your message.
-4. Available themes: forest, ocean, rose, midnight, sand, slate, neon, aurora, paper, glass, candy, earth, sunset, lavender
+4. Available themes: ${isPro ? allThemes : freeThemes}
 
 <apply> block format — only include fields that are changing:
 <apply>
@@ -106,6 +109,7 @@ RULES:
   "links": [{ "id": "existing-link-id", "title": "new title" }]
 }
 </apply>`
+  }
 
   const handleSend = async () => {
     if (!input.trim() || loading) return

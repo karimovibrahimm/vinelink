@@ -179,7 +179,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       "label": "Bold & Creative",
       "full_name": "their real name or handle, cleaned up",
       "bio": "edgy, punchy bio under 110 chars — memorable and specific to their niche, not generic",
-      "theme": "pick ONE from: neon, aurora, midnight, glass",
+      "theme": "pick ONE from: slate, ocean, earth, sand",
       "links": [
         { "title": "label that fits their brand voice", "url": "https://full-url-from-input" }
       ]
@@ -197,7 +197,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       "label": "Warm & Personal",
       "full_name": "their name",
       "bio": "friendly, personal bio under 110 chars — feels like a real person, not a brand",
-      "theme": "pick ONE from: forest, rose, candy, lavender, sunset",
+      "theme": "pick ONE from: forest, rose, lavender, sunset",
       "links": [
         { "title": "label", "url": "https://full-url-from-input" }
       ]

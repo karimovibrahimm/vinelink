@@ -271,6 +271,7 @@ function Appearance() {
             <PhonePreview
               profile={{ ...profile, full_name: form.full_name, bio: form.bio, avatar_url: avatarPreview || avatarUrl }}
               links={links}
+              blocks={blocks}
               themeObj={activeTheme}
             />
           </div>

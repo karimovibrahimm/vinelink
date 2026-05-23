@@ -231,7 +231,11 @@ function Dashboard() {
       const updates = {}
       if (applyData.full_name) updates.full_name = applyData.full_name
       if (applyData.bio) updates.bio = applyData.bio
-      if (applyData.theme) updates.theme = applyData.theme
+      if (applyData.theme) {
+        const { themes: allThemes } = await import('../../lib/themes')
+        const t = allThemes.find(t => t.id === applyData.theme)
+        if (!t?.pro || profile?.plan === 'pro') updates.theme = applyData.theme
+      }
       await supabase.from('profiles').update(updates).eq('id', user.id)
       await getProfile(user.id)
     }
