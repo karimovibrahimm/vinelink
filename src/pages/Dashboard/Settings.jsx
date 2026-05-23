@@ -13,6 +13,7 @@ function Settings() {
 
   const toast = useToast()
   const [upgrading, setUpgrading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [emailPending, setEmailPending] = useState(false)
@@ -79,6 +80,26 @@ function Settings() {
       toast.error(`Could not open checkout: ${err.message}`)
       setUpgrading(false)
     }
+  }
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/polar-portal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const json = await res.json()
+      if (json.url) {
+        window.open(json.url, '_blank')
+      } else {
+        toast.error(json.error || 'Could not open subscription portal.')
+      }
+    } catch (err) {
+      toast.error(`Error: ${err.message}`)
+    }
+    setPortalLoading(false)
   }
 
   const handleLogout = async () => {
@@ -166,14 +187,13 @@ function Settings() {
                   You're on the Pro plan. Thank you for supporting Vinelink!
                 </div>
               </div>
-              <a
-                href="https://polar.sh/purchases"
-                target="_blank"
-                rel="noreferrer"
+              <button
                 className="settings__manage-btn"
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
               >
-                Manage subscription ↗
-              </a>
+                {portalLoading ? 'Loading…' : 'Manage subscription ↗'}
+              </button>
             </div>
           ) : (
             <div className="settings__plan-free">
