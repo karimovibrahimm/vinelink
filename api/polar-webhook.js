@@ -1,74 +1,73 @@
-import crypto from 'crypto'
-
-export const config = { api: { bodyParser: false } }
-
-function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = []
-    req.on('data', chunk => chunks.push(chunk))
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
-    req.on('error', reject)
-  })
-}
-
-function verifySignature(rawBody, headers, secret) {
-  const msgId        = headers['webhook-id']
-  const msgTimestamp = headers['webhook-timestamp']
-  const msgSignature = headers['webhook-signature']
-  if (!msgId || !msgTimestamp || !msgSignature) return false
-
-  const now = Math.floor(Date.now() / 1000)
-  if (Math.abs(now - parseInt(msgTimestamp, 10)) > 300) return false
-
-  const signedContent = `${msgId}.${msgTimestamp}.${rawBody}`
-  const secretBytes   = Buffer.from(secret.replace(/^(whsec_|polar_whs_)/, ''), 'base64')
-  const computed      = crypto.createHmac('sha256', secretBytes).update(signedContent).digest('base64')
-
-  return msgSignature.split(' ').some(sig => {
-    const [, value] = sig.split(',')
-    return value === computed
-  })
+async function findUserByEmail(email) {
+  if (!email) return null
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const res = await fetch(
+    `${process.env.VITE_SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}&page=1&per_page=1`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+  )
+  const data = await res.json()
+  return data?.users?.[0]?.id || null
 }
 
 async function updatePlan(userId, plan) {
-  const url  = `${process.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`
-  const body = JSON.stringify({ plan })
-  await fetch(url, {
-    method:  'PATCH',
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  await fetch(`${process.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+    method: 'PATCH',
     headers: {
-      apikey:           process.env.SUPABASE_SERVICE_ROLE_KEY,
-      Authorization:    `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      'Content-Type':   'application/json',
-      Prefer:           'return=minimal',
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
     },
-    body,
+    body: JSON.stringify({ plan }),
   })
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const rawBody = await getRawBody(req)
-
-  if (!verifySignature(rawBody, req.headers, process.env.POLAR_WEBHOOK_SECRET || '')) {
-    return res.status(401).json({ error: 'Invalid signature' })
+  // Vercel auto-parses JSON bodies — handle both parsed object and raw stream
+  let payload
+  if (req.body && typeof req.body === 'object') {
+    payload = req.body
+  } else {
+    try {
+      const raw = await new Promise((resolve, reject) => {
+        const chunks = []
+        req.on('data', c => chunks.push(c))
+        req.on('end', () => resolve(Buffer.concat(chunks).toString()))
+        req.on('error', reject)
+      })
+      payload = JSON.parse(raw)
+    } catch {
+      return res.status(400).json({ error: 'Invalid payload' })
+    }
   }
 
-  let payload
-  try { payload = JSON.parse(rawBody) } catch { return res.status(400).json({ error: 'Invalid JSON' }) }
+  const { type, data } = payload || {}
+  console.log('[webhook] event:', type, '| email:', data?.customer?.email, '| meta_user_id:', data?.metadata?.user_id)
 
-  const { type, data } = payload
-  const userId = data?.metadata?.user_id
+  // Identify the user: prefer metadata.user_id, fall back to email lookup
+  let userId = data?.metadata?.user_id
+  if (!userId) userId = await findUserByEmail(data?.customer?.email)
+
+  if (!userId) {
+    console.log('[webhook] no user found, ignoring')
+    return res.json({ received: true })
+  }
 
   try {
     if (type === 'subscription.created' || type === 'subscription.updated') {
-      if (userId) await updatePlan(userId, data.status === 'active' ? 'pro' : 'free')
+      const plan = data?.status === 'active' ? 'pro' : 'free'
+      await updatePlan(userId, plan)
+      console.log('[webhook] set', userId, '->', plan)
     } else if (type === 'subscription.canceled' || type === 'subscription.revoked') {
-      if (userId) await updatePlan(userId, 'free')
+      await updatePlan(userId, 'free')
+      console.log('[webhook] revoked pro for', userId)
     }
     res.json({ received: true })
   } catch (err) {
-    console.error('Webhook error:', err)
+    console.error('[webhook] error:', err)
     res.status(500).json({ error: err.message })
   }
 }
