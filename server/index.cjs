@@ -43,6 +43,43 @@ app.post('/api/polar-checkout', async (req, res) => {
   }
 })
 
+app.post('/api/polar-portal', async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+
+  const supabase = createClient(
+    process.env.VITE_SUPABASE_URL,
+    process.env.VITE_SUPABASE_ANON_KEY,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) return res.status(401).json({ error: 'Unauthorized' })
+
+  try {
+    const payload = JSON.stringify({ customer_email: user.email })
+    const result = await new Promise((resolve, reject) => {
+      const u = new URL('https://api.polar.sh/v1/customer-sessions')
+      const r = https.request(
+        { hostname: u.hostname, path: u.pathname, method: 'POST',
+          headers: { Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+        (resp) => { let raw = ''; resp.on('data', c => raw += c); resp.on('end', () => { try { resolve({ status: resp.statusCode, body: JSON.parse(raw) }) } catch { resolve({ status: resp.statusCode, body: raw }) } }) }
+      )
+      r.on('error', reject)
+      r.write(payload)
+      r.end()
+    })
+
+    if (result.status >= 400) {
+      const detail = typeof result.body === 'object' ? (result.body.detail || result.body.message || JSON.stringify(result.body)) : String(result.body)
+      return res.status(400).json({ error: `Polar: ${detail}` })
+    }
+    res.json({ url: result.body.customer_portal_url })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/send-newsletter', async (req, res) => {
   const { blockId, subject, body, token } = req.body || {}
   if (!blockId || !subject?.trim() || !body?.trim() || !token) {
