@@ -1,6 +1,6 @@
-const { createClient } = require('@supabase/supabase-js')
+import { createClient } from '@supabase/supabase-js'
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const token = (req.headers.authorization || '').replace('Bearer ', '')
@@ -21,7 +21,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Look up the Polar customer by email
     const customerRes = await fetch(
       `https://api.polar.sh/v1/customers?email=${encodeURIComponent(user.email)}&limit=1`,
       { headers }
@@ -30,10 +29,9 @@ module.exports = async (req, res) => {
     const customer = customerData?.items?.[0] || customerData?.result?.items?.[0]
 
     if (!customer?.id) {
-      return res.status(404).json({ error: 'No Polar customer found for this account. Make sure you have an active subscription.' })
+      return res.status(404).json({ error: 'No Polar customer found. Make sure you have an active subscription.' })
     }
 
-    // Create a customer portal session
     const sessionRes = await fetch('https://api.polar.sh/v1/customer-sessions', {
       method: 'POST',
       headers,

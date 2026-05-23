@@ -1,5 +1,8 @@
-const { readFileSync } = require('fs')
-const { join } = require('path')
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 function escapeHtml(str = '') {
   return String(str)
@@ -9,7 +12,6 @@ function escapeHtml(str = '') {
     .replace(/"/g, '&quot;')
 }
 
-// Read once at cold start
 let template
 try {
   template = readFileSync(join(__dirname, '..', 'dist', 'index.html'), 'utf8')
@@ -17,8 +19,8 @@ try {
   template = null
 }
 
-module.exports = async function handler(req, res) {
-  const host = req.headers.host || ''
+export default async function handler(req, res) {
+  const host     = req.headers.host || ''
   const username = host.split('.')[0]
 
   if (!username || username === 'www') {
@@ -33,22 +35,22 @@ module.exports = async function handler(req, res) {
       `${process.env.VITE_SUPABASE_URL}/rest/v1/profiles?username=eq.${encodeURIComponent(username)}&select=username,full_name,bio,avatar_url&limit=1`,
       {
         headers: {
-          apikey: process.env.VITE_SUPABASE_ANON_KEY,
+          apikey:        process.env.VITE_SUPABASE_ANON_KEY,
           Authorization: `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`,
         },
       }
     )
 
     const profiles = await response.json()
-    const profile = profiles?.[0]
+    const profile  = profiles?.[0]
 
     if (profile && html) {
-      const title = profile.full_name
+      const title      = profile.full_name
         ? `${profile.full_name} (@${profile.username}) | Vinelink`
         : `@${profile.username} | Vinelink`
       const description = profile.bio || `Check out ${profile.username}'s links on Vinelink`
-      const image = profile.avatar_url || 'https://vinelink.xyz/og-default.png'
-      const profileUrl = `https://${profile.username}.vinelink.xyz`
+      const image       = profile.avatar_url || 'https://vinelink.xyz/og-default.png'
+      const profileUrl  = `https://${profile.username}.vinelink.xyz`
 
       const ogTags = `
   <meta name="description" content="${escapeHtml(description)}" />
@@ -71,10 +73,7 @@ module.exports = async function handler(req, res) {
     // serve unmodified index.html on error
   }
 
-  if (!html) {
-    res.status(500).end()
-    return
-  }
+  if (!html) { res.status(500).end(); return }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400')

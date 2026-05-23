@@ -1,7 +1,7 @@
-const { Resend } = require('resend')
-const { createClient } = require('@supabase/supabase-js')
+import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const { blockId, subject, body, token } = req.body || {}
@@ -12,7 +12,6 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'RESEND_API_KEY is not configured.' })
   }
 
-  // Verify the user's session token
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.VITE_SUPABASE_ANON_KEY,
@@ -22,7 +21,6 @@ module.exports = async (req, res) => {
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) return res.status(401).json({ error: 'Unauthorized.' })
 
-  // Confirm the block belongs to this user
   const { data: block } = await supabase
     .from('blocks')
     .select('id, data')
@@ -33,16 +31,13 @@ module.exports = async (req, res) => {
 
   if (!block) return res.status(404).json({ error: 'Newsletter block not found.' })
 
-  // Fetch subscribers
   const { data: subscribers } = await supabase
     .from('newsletter_subscribers')
     .select('email')
     .eq('block_id', blockId)
     .eq('user_id', user.id)
 
-  if (!subscribers?.length) {
-    return res.status(400).json({ error: 'No subscribers to send to.' })
-  }
+  if (!subscribers?.length) return res.status(400).json({ error: 'No subscribers to send to.' })
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -50,7 +45,6 @@ module.exports = async (req, res) => {
     .eq('id', user.id)
     .single()
 
-  // Free plan: 1 send per month
   if (profile?.plan !== 'pro') {
     const start = new Date()
     start.setDate(1)
@@ -90,15 +84,15 @@ module.exports = async (req, res) => {
 </body>
 </html>`
 
-  const resend  = new Resend(process.env.RESEND_API_KEY)
-  const from    = `${senderName} via VineLink <${fromAddress}>`
-  const BATCH   = 100
-  let sent      = 0
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  const from   = `${senderName} via VineLink <${fromAddress}>`
 
   try {
     const emails = subscribers.map(s => ({ from, to: s.email, subject, html }))
+    const BATCH  = 100
+    let sent     = 0
     for (let i = 0; i < emails.length; i += BATCH) {
-      const { data, error } = await resend.batch.send(emails.slice(i, i + BATCH))
+      const { error } = await resend.batch.send(emails.slice(i, i + BATCH))
       if (error) return res.status(500).json({ error: error.message || JSON.stringify(error) })
       sent += Math.min(BATCH, emails.length - i)
     }

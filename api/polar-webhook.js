@@ -1,6 +1,6 @@
-const crypto = require('crypto')
+import crypto from 'crypto'
 
-module.exports.config = { api: { bodyParser: false } }
+export const config = { api: { bodyParser: false } }
 
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
@@ -31,32 +31,21 @@ function verifySignature(rawBody, headers, secret) {
 }
 
 async function updatePlan(userId, plan) {
-  const https  = require('https')
-  const url    = new URL(`${process.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`)
-  const body   = JSON.stringify({ plan })
-  return new Promise((resolve, reject) => {
-    const req = https.request(
-      {
-        hostname: url.hostname,
-        path:     url.pathname + url.search,
-        method:   'PATCH',
-        headers:  {
-          apikey:           process.env.SUPABASE_SERVICE_ROLE_KEY,
-          Authorization:    `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          'Content-Type':   'application/json',
-          Prefer:           'return=minimal',
-          'Content-Length': Buffer.byteLength(body),
-        },
-      },
-      res => { res.resume(); resolve(res.statusCode) }
-    )
-    req.on('error', reject)
-    req.write(body)
-    req.end()
+  const url  = `${process.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`
+  const body = JSON.stringify({ plan })
+  await fetch(url, {
+    method:  'PATCH',
+    headers: {
+      apikey:           process.env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization:    `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type':   'application/json',
+      Prefer:           'return=minimal',
+    },
+    body,
   })
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const rawBody = await getRawBody(req)
