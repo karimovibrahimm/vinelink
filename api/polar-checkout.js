@@ -1,21 +1,20 @@
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).end()
+  res.setHeader('Content-Type', 'application/json')
 
-  const { userId, email } = req.body || {}
-
-  if (!process.env.POLAR_ACCESS_TOKEN || !process.env.POLAR_PRICE_ID) {
-    return res.status(500).json({ error: 'Missing POLAR_ACCESS_TOKEN or POLAR_PRICE_ID in Vercel env vars' })
-  }
-
-  if (!userId || !email) {
-    return res.status(400).json({ error: 'Missing userId or email' })
-  }
+  if (req.method !== 'POST') return res.status(405).end('{}')
 
   try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {})
+    const { userId, email } = body
+
+    if (!process.env.POLAR_ACCESS_TOKEN) return res.status(500).json({ error: 'POLAR_ACCESS_TOKEN not set' })
+    if (!process.env.POLAR_PRICE_ID)     return res.status(500).json({ error: 'POLAR_PRICE_ID not set' })
+    if (!userId || !email)               return res.status(400).json({ error: 'Missing userId or email' })
+
     const response = await fetch('https://api.polar.sh/v1/checkouts/custom', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
+        Authorization:  `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -26,17 +25,19 @@ module.exports = async (req, res) => {
       }),
     })
 
-    const data = await response.json()
+    const text = await response.text()
+    let data
+    try { data = JSON.parse(text) } catch { return res.status(500).json({ error: `Polar non-JSON: ${text.slice(0, 200)}` }) }
 
     if (!response.ok) {
       const detail = Array.isArray(data.detail)
         ? JSON.stringify(data.detail)
         : (data.detail || data.message || JSON.stringify(data))
-      return res.status(400).json({ error: `Polar: ${detail}` })
+      return res.status(400).json({ error: `Polar ${response.status}: ${detail}` })
     }
 
-    res.json({ url: data.url })
+    return res.status(200).json({ url: data.url })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: err.message || String(err) })
   }
 }
