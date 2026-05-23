@@ -61,7 +61,17 @@ export default async function handler(req, res) {
       const plan = data?.status === 'active' ? 'pro' : 'free'
       await updatePlan(userId, plan)
       console.log('[webhook] set', userId, '->', plan)
-    } else if (type === 'subscription.canceled' || type === 'subscription.revoked') {
+    } else if (type === 'subscription.canceled') {
+      // cancel_at_period_end = user canceled but period hasn't ended yet — keep pro
+      const periodEnd = data?.current_period_end ? new Date(data.current_period_end) : null
+      const stillActive = data?.cancel_at_period_end && periodEnd && periodEnd > new Date()
+      if (!stillActive) {
+        await updatePlan(userId, 'free')
+        console.log('[webhook] canceled, removed pro for', userId)
+      } else {
+        console.log('[webhook] canceled at period end, keeping pro until', periodEnd)
+      }
+    } else if (type === 'subscription.revoked') {
       await updatePlan(userId, 'free')
       console.log('[webhook] revoked pro for', userId)
     }
