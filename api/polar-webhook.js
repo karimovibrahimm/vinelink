@@ -1,5 +1,16 @@
 const crypto = require('crypto')
 
+module.exports.config = { api: { bodyParser: false } }
+
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+    req.on('error', reject)
+  })
+}
+
 function verifySignature(rawBody, headers, secret) {
   const msgId        = headers['webhook-id']
   const msgTimestamp = headers['webhook-timestamp']
@@ -30,10 +41,10 @@ async function updatePlan(userId, plan) {
         path:     url.pathname + url.search,
         method:   'PATCH',
         headers:  {
-          apikey:          process.env.SUPABASE_SERVICE_ROLE_KEY,
-          Authorization:   `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          'Content-Type':  'application/json',
-          Prefer:          'return=minimal',
+          apikey:           process.env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization:    `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'Content-Type':   'application/json',
+          Prefer:           'return=minimal',
           'Content-Length': Buffer.byteLength(body),
         },
       },
@@ -48,13 +59,16 @@ async function updatePlan(userId, plan) {
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const rawBody = JSON.stringify(req.body)
+  const rawBody = await getRawBody(req)
 
   if (!verifySignature(rawBody, req.headers, process.env.POLAR_WEBHOOK_SECRET || '')) {
     return res.status(401).json({ error: 'Invalid signature' })
   }
 
-  const { type, data } = req.body
+  let payload
+  try { payload = JSON.parse(rawBody) } catch { return res.status(400).json({ error: 'Invalid JSON' }) }
+
+  const { type, data } = payload
   const userId = data?.metadata?.user_id
 
   try {

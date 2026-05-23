@@ -167,7 +167,7 @@ function Settings() {
                 </div>
               </div>
               <a
-                href="https://polar.sh/purchases/subscriptions"
+                href="https://polar.sh/purchases"
                 target="_blank"
                 rel="noreferrer"
                 className="settings__manage-btn"
