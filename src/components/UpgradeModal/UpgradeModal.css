@@ -110,6 +110,13 @@
 .upgrade-modal__cta:hover:not(:disabled) { opacity: 0.88; }
 .upgrade-modal__cta:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.upgrade-modal__error {
+  color: #e53e3e;
+  font-size: 13px;
+  text-align: center;
+  margin: 0 0 8px;
+}
+
 .upgrade-modal__skip {
   background: none;
   border: none;

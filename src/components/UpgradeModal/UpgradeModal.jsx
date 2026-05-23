@@ -4,9 +4,11 @@ import './UpgradeModal.css'
 
 function UpgradeModal({ title, message, onClose }) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleUpgrade = async () => {
     setLoading(true)
+    setError('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
@@ -19,10 +21,11 @@ function UpgradeModal({ title, message, onClose }) {
       if (json.url) {
         window.location.href = json.url
       } else {
-        console.error('Checkout error:', json.error)
+        setError(json.error || 'Something went wrong. Please try again.')
         setLoading(false)
       }
-    } catch {
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
       setLoading(false)
     }
   }
@@ -48,8 +51,9 @@ function UpgradeModal({ title, message, onClose }) {
           <li>Priority support</li>
         </ul>
 
+        {error && <p className="upgrade-modal__error">{error}</p>}
         <button className="upgrade-modal__cta" onClick={handleUpgrade} disabled={loading}>
-          {loading ? 'Loading…' : '⚡ Upgrade to Pro — $4/mo'}
+          {loading ? 'Loading…' : '⚡ Upgrade to Pro — $3.99/mo'}
         </button>
         <button className="upgrade-modal__skip" onClick={onClose}>Maybe later</button>
       </div>
