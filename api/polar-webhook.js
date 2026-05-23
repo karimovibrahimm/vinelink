@@ -21,7 +21,7 @@ function verifySignature(rawBody, headers, secret) {
   if (Math.abs(now - parseInt(msgTimestamp, 10)) > 300) return false
 
   const signedContent = `${msgId}.${msgTimestamp}.${rawBody}`
-  const secretBytes   = Buffer.from(secret.replace(/^whsec_/, ''), 'base64')
+  const secretBytes   = Buffer.from(secret.replace(/^(whsec_|polar_whs_)/, ''), 'base64')
   const computed      = crypto.createHmac('sha256', secretBytes).update(signedContent).digest('base64')
 
   return msgSignature.split(' ').some(sig => {
