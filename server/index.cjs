@@ -56,26 +56,40 @@ app.post('/api/polar-portal', async (req, res) => {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return res.status(401).json({ error: 'Unauthorized' })
 
+  const polarHeaders = {
+    Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
+    'Content-Type': 'application/json',
+  }
+
   try {
-    const response = await fetch('https://api.polar.sh/v1/customer-sessions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ customer_email: user.email }),
-    })
+    // Look up Polar customer by email
+    const customerRes = await fetch(
+      `https://api.polar.sh/v1/customers?email=${encodeURIComponent(user.email)}&limit=1`,
+      { headers: polarHeaders }
+    )
+    const customerData = await customerRes.json()
+    const customer = customerData?.items?.[0] || customerData?.result?.items?.[0]
 
-    const data = await response.json()
-    console.log('[polar-portal] status:', response.status, 'body:', JSON.stringify(data))
-
-    if (!response.ok) {
-      const detail = data.detail || data.message || JSON.stringify(data)
-      return res.status(400).json({ error: `Polar ${response.status}: ${detail}` })
+    if (!customer?.id) {
+      return res.status(404).json({ error: 'No Polar customer found for this account. Make sure you have an active subscription.' })
     }
 
-    const url = data.customer_portal_url || data.url
-    if (!url) return res.status(500).json({ error: `Polar ${response.status}: ${JSON.stringify(data)}` })
+    // Create portal session with customer_id
+    const sessionRes = await fetch('https://api.polar.sh/v1/customer-sessions', {
+      method: 'POST',
+      headers: polarHeaders,
+      body: JSON.stringify({ customer_id: customer.id }),
+    })
+    const sessionData = await sessionRes.json()
+    console.log('[polar-portal] session status:', sessionRes.status, JSON.stringify(sessionData))
+
+    if (!sessionRes.ok) {
+      const detail = Array.isArray(sessionData.detail) ? JSON.stringify(sessionData.detail) : (sessionData.detail || sessionData.message || JSON.stringify(sessionData))
+      return res.status(400).json({ error: `Polar ${sessionRes.status}: ${detail}` })
+    }
+
+    const url = sessionData.customer_portal_url || sessionData.url
+    if (!url) return res.status(500).json({ error: `Polar returned: ${JSON.stringify(sessionData)}` })
     res.json({ url })
   } catch (err) {
     res.status(500).json({ error: err.message })
