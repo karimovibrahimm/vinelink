@@ -9,6 +9,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import './Blocks.css'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import { getProfileUrl } from '../../lib/url'
 import usePageMeta from '../../lib/usePageMeta'
 import { useToast } from '../../lib/ToastContext'
@@ -272,6 +273,9 @@ function Blocks() {
   const [editing, setEditing]   = useState(null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+
+  const FREE_BLOCK_LIMIT = 5
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -381,7 +385,13 @@ function Blocks() {
               </svg>
               Preview page
             </a>
-            <button className="dashboard__add-btn" onClick={() => { setAdding(true); setEditing(null) }}>
+            <button className="dashboard__add-btn" onClick={() => {
+              if (profile?.plan !== 'pro' && blocks.length >= FREE_BLOCK_LIMIT) {
+                setUpgradeOpen(true)
+              } else {
+                setAdding(true); setEditing(null)
+              }
+            }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
@@ -389,6 +399,17 @@ function Blocks() {
             </button>
           </div>
         </div>
+
+        {profile?.plan !== 'pro' && blocks.length > 0 && (
+          <div className="dashboard__plan-bar">
+            <span>{blocks.length}/{FREE_BLOCK_LIMIT} blocks used</span>
+            {blocks.length >= FREE_BLOCK_LIMIT && (
+              <button className="dashboard__plan-bar-upgrade" onClick={() => setUpgradeOpen(true)}>
+                Upgrade for unlimited
+              </button>
+            )}
+          </div>
+        )}
 
         {error && <div className="dashboard__error">{error}</div>}
 
@@ -419,7 +440,10 @@ function Blocks() {
               <div className="dashboard__empty-icon">✨</div>
               <h3>No blocks yet</h3>
               <p>Add your first creator block to make your page a mini-website</p>
-              <button className="dashboard__add-btn" onClick={() => setAdding(true)}>Add your first block</button>
+              <button className="dashboard__add-btn" onClick={() => {
+                if (profile?.plan !== 'pro' && blocks.length >= FREE_BLOCK_LIMIT) setUpgradeOpen(true)
+                else setAdding(true)
+              }}>Add your first block</button>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -438,6 +462,14 @@ function Blocks() {
           )}
         </div>
       </main>
+
+      {upgradeOpen && (
+        <UpgradeModal
+          title="Block limit reached"
+          message={`Free accounts can have up to ${FREE_BLOCK_LIMIT} blocks. Upgrade to Pro for unlimited blocks.`}
+          onClose={() => setUpgradeOpen(false)}
+        />
+      )}
 
     </DashboardLayout>
   )

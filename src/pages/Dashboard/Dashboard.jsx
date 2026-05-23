@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../../lib/ToastContext'
 import AiAssistant from '../../components/AiAssistant/AiAssistant'
+import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import { getThemeById } from '../../lib/themes'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
@@ -126,7 +127,10 @@ function Dashboard() {
   const [error, setError] = useState('')
   const [auditOpen, setAuditOpen] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const toast = useToast()
+
+  const FREE_LINK_LIMIT = 5
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -285,7 +289,17 @@ function Dashboard() {
               </svg>
               <span>Preview page</span>
             </a>
-            <button className="dashboard__add-btn" onClick={() => setAddingLink(true)} title="Add link">
+            <button
+              className="dashboard__add-btn"
+              onClick={() => {
+                if (profile?.plan !== 'pro' && links.length >= FREE_LINK_LIMIT) {
+                  setUpgradeOpen(true)
+                } else {
+                  setAddingLink(true)
+                }
+              }}
+              title="Add link"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
@@ -326,6 +340,17 @@ function Dashboard() {
           </div>
         </div>
 
+        {profile?.plan !== 'pro' && links.length > 0 && (
+          <div className="dashboard__plan-bar">
+            <span>{links.length}/{FREE_LINK_LIMIT} links used</span>
+            {links.length >= FREE_LINK_LIMIT && (
+              <button className="dashboard__plan-bar-upgrade" onClick={() => setUpgradeOpen(true)}>
+                Upgrade for unlimited
+              </button>
+            )}
+          </div>
+        )}
+
         {error && <div className="dashboard__error">{error}</div>}
 
         {addingLink && (
@@ -362,7 +387,10 @@ function Dashboard() {
               <div className="dashboard__empty-icon">🔗</div>
               <h3>No links yet</h3>
               <p>Add your first link to get started</p>
-              <button className="dashboard__add-btn" onClick={() => setAddingLink(true)}>Add your first link</button>
+              <button className="dashboard__add-btn" onClick={() => {
+                if (profile?.plan !== 'pro' && links.length >= FREE_LINK_LIMIT) setUpgradeOpen(true)
+                else setAddingLink(true)
+              }}>Add your first link</button>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -412,6 +440,14 @@ function Dashboard() {
           username={profile?.username}
           url={getProfileUrl(profile?.username)}
           onClose={() => setQrOpen(false)}
+        />
+      )}
+
+      {upgradeOpen && (
+        <UpgradeModal
+          title="Link limit reached"
+          message={`Free accounts can have up to ${FREE_LINK_LIMIT} links. Upgrade to Pro for unlimited links.`}
+          onClose={() => setUpgradeOpen(false)}
         />
       )}
 

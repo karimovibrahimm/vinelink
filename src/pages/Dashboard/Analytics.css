@@ -27,6 +27,17 @@
   color: var(--color-primary);
 }
 
+.analytics__period-btn--locked {
+  opacity: 0.55;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.analytics__period-btn--locked:hover {
+  opacity: 0.85;
+  color: var(--color-primary);
+}
+
 /* Stat cards */
 .analytics__stats {
   display: grid;

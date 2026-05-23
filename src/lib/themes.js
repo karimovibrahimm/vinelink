@@ -38,6 +38,7 @@ export const themes = [
   {
     id: 'midnight',
     name: 'Midnight',
+    pro: true,
     primary: '#0d0d1a',
     accent: '#7a6aca',
     bg: '#0d0d1a',
@@ -76,6 +77,7 @@ export const themes = [
   {
     id: 'neon',
     name: 'Neon',
+    pro: true,
     primary: '#0a0a0a',
     accent: '#00ff88',
     bg: '#0a0a0a',
@@ -91,6 +93,7 @@ export const themes = [
   {
     id: 'aurora',
     name: 'Aurora',
+    pro: true,
     primary: '#0a1628',
     accent: '#64ffda',
     bg: '#0a1628',
@@ -118,6 +121,7 @@ export const themes = [
   {
     id: 'glass',
     name: 'Glass',
+    pro: true,
     primary: '#1a1a2e',
     accent: '#e94560',
     bg: '#16213e',
@@ -132,6 +136,7 @@ export const themes = [
   {
     id: 'candy',
     name: 'Candy',
+    pro: true,
     primary: '#d63384',
     accent: '#fd7e14',
     bg: '#fff0f8',

@@ -422,6 +422,32 @@
   color: var(--color-white);
 }
 
+.dashboard__plan-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-background);
+  border: 1px solid var(--color-background-dark);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin-bottom: 16px;
+}
+
+.dashboard__plan-bar-upgrade {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.dashboard__plan-bar-upgrade:hover { opacity: 0.85; }
+
 .dashboard__error {
   background-color: #fdecea;
   border: 1px solid #f5c6c6;

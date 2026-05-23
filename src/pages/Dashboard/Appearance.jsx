@@ -5,6 +5,7 @@ import { getThemeById } from '../../lib/themes'
 import './Appearance.css'
 import PhonePreview from '../../components/PhonePreview/PhonePreview'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import usePageMeta from '../../lib/usePageMeta'
 import { useToast } from '../../lib/ToastContext'
 
@@ -55,6 +56,7 @@ function Appearance() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [links, setLinks] = useState([])
+  const [blocks, setBlocks] = useState([])
   const [loading, setLoading] = useState(true)
   usePageMeta('Appearance | Vinelink', 'Customize your Vinelink page theme, bio, and profile photo.')
 
@@ -65,6 +67,7 @@ function Appearance() {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [form, setForm] = useState({ full_name: '', bio: '', theme: 'forest' })
   const [mobilePreview, setMobilePreview] = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const fileInputRef = useRef(null)
   const toast = useToast()
 
@@ -75,7 +78,7 @@ function Appearance() {
     if (!user) { window.location.href = '/login'; return }
     setUser(user)
     await getProfile(user.id)
-    await getLinks(user.id)
+    await Promise.all([getLinks(user.id), getBlocks(user.id)])
     setLoading(false)
   }
 
@@ -91,6 +94,11 @@ function Appearance() {
   const getLinks = async (userId) => {
     const { data } = await supabase.from('links').select('*').eq('user_id', userId).eq('active', true).order('position', { ascending: true })
     if (data) setLinks(data)
+  }
+
+  const getBlocks = async (userId) => {
+    const { data } = await supabase.from('blocks').select('*').eq('user_id', userId).eq('active', true).order('position', { ascending: true })
+    if (data) setBlocks(data)
   }
 
   const handleAvatarChange = async (e) => {
@@ -112,12 +120,22 @@ function Appearance() {
   }
 
   const handleSave = async () => {
+    const selectedTheme = themes.find(t => t.id === form.theme)
+    if (selectedTheme?.pro && profile?.plan !== 'pro') {
+      setUpgradeOpen(true)
+      return
+    }
     setSaving(true)
     const { error } = await supabase.from('profiles').update({
       full_name: form.full_name, bio: form.bio, theme: form.theme
     }).eq('id', user.id)
     if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await getProfile(user.id); toast.success('Changes saved!') }
     setSaving(false)
+  }
+
+  const handleCloseUpgrade = () => {
+    setUpgradeOpen(false)
+    setForm(f => ({ ...f, theme: profile?.theme || 'forest' }))
   }
 
   const activeTheme = themes.find(t => t.id === form.theme) || themes[0]
@@ -206,17 +224,31 @@ function Appearance() {
           <h2 className="appearance__section-title">Theme</h2>
           <p className="appearance__section-subtitle">Choose a color theme for your page</p>
           <div className="appearance__themes">
-            {themes.map((theme) => (
-              <button
-                key={theme.id}
-                className={`appearance__theme ${form.theme === theme.id ? 'appearance__theme--active' : ''}`}
-                onClick={() => setForm({ ...form, theme: theme.id })}
-              >
-                <ThemeMiniPreview theme={theme} />
-                <span className="appearance__theme-name">{theme.name}</span>
-                {form.theme === theme.id && <div className="appearance__theme-check">✓</div>}
-              </button>
-            ))}
+            {themes.map((theme) => {
+              const isLocked = theme.pro && profile?.plan !== 'pro'
+              return (
+                <button
+                  key={theme.id}
+                  className={`appearance__theme ${form.theme === theme.id ? 'appearance__theme--active' : ''} ${isLocked ? 'appearance__theme--locked' : ''}`}
+                  onClick={() => {
+                    setForm({ ...form, theme: theme.id })
+                    if (isLocked) setUpgradeOpen(true)
+                  }}
+                >
+                  <ThemeMiniPreview theme={theme} />
+                  <span className="appearance__theme-name">{theme.name}</span>
+                  {isLocked && (
+                    <div className="appearance__theme-lock">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                      Pro
+                    </div>
+                  )}
+                  {!isLocked && form.theme === theme.id && <div className="appearance__theme-check">✓</div>}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -228,6 +260,7 @@ function Appearance() {
       <PhonePreview
         profile={{ ...profile, full_name: form.full_name, bio: form.bio, avatar_url: avatarPreview || avatarUrl }}
         links={links}
+        blocks={blocks}
         themeObj={activeTheme}
       />
 
@@ -242,6 +275,14 @@ function Appearance() {
             />
           </div>
         </div>
+      )}
+
+      {upgradeOpen && (
+        <UpgradeModal
+          title="Pro theme"
+          message="That's a Pro theme — you can preview it, but saving requires a Pro plan. Upgrade to unlock all premium themes."
+          onClose={handleCloseUpgrade}
+        />
       )}
 
     </DashboardLayout>

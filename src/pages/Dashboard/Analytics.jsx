@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
+import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import usePageMeta from '../../lib/usePageMeta'
 import './Analytics.css'
 
@@ -14,6 +15,7 @@ function Analytics() {
 
   const [period, setPeriod] = useState(7)
   const [transitioning, setTransitioning] = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   useEffect(() => { getUser() }, [])
 
@@ -107,15 +109,24 @@ function Analytics() {
             </p>
           </div>
           <div className="analytics__period">
-            {[7, 30, 90].map(p => (
-              <button
-                key={p}
-                className={`analytics__period-btn ${period === p ? 'analytics__period-btn--active' : ''}`}
-                onClick={() => handlePeriod(p)}
-              >
-                {p === 90 ? 'All time' : `${p} days`}
-              </button>
-            ))}
+            {[7, 30, 90].map(p => {
+              const isLocked = p !== 7 && profile?.plan !== 'pro'
+              return (
+                <button
+                  key={p}
+                  className={`analytics__period-btn ${period === p ? 'analytics__period-btn--active' : ''} ${isLocked ? 'analytics__period-btn--locked' : ''}`}
+                  onClick={() => isLocked ? setUpgradeOpen(true) : handlePeriod(p)}
+                  title={isLocked ? 'Upgrade to Pro to unlock' : undefined}
+                >
+                  {p === 90 ? 'All time' : `${p} days`}
+                  {isLocked && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
+                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -202,6 +213,14 @@ function Analytics() {
           )}
         </div>
       </main>
+
+      {upgradeOpen && (
+        <UpgradeModal
+          title="Advanced analytics"
+          message="The 30-day and All-time views are available on the Pro plan. Upgrade to see your full data history."
+          onClose={() => setUpgradeOpen(false)}
+        />
+      )}
 
     </DashboardLayout>
   )

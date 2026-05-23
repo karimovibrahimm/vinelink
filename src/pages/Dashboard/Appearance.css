@@ -103,6 +103,29 @@
   font-weight: 700;
 }
 
+.appearance__theme--locked {
+  opacity: 0.75;
+}
+.appearance__theme--locked:hover {
+  opacity: 1;
+}
+
+.appearance__theme-lock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  backdrop-filter: blur(2px);
+}
+
 /* Mini theme preview */
 .appearance__mini {
   width: 100%;
