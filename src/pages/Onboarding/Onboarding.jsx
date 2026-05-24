@@ -215,8 +215,8 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       setVariants(parsed.variants)
       setSelectedIndex(0)
       setStep(isGoogleUser ? 2 : 2)
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (e) {
+      setError(e.message || 'Something went wrong. Please try again.')
     }
 
     setLoading(false)
