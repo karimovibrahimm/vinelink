@@ -1,7 +1,10 @@
+import { rateLimit } from './_rateLimit.js'
+
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json')
 
   if (req.method !== 'POST') return res.status(405).end('{}')
+  if (!await rateLimit(req, res, 'checkout')) return
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {})

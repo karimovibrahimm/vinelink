@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit } from './_rateLimit.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
+  if (!await rateLimit(req, res, 'portal')) return
 
   const token = (req.headers.authorization || '').replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Unauthorized' })

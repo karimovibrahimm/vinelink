@@ -1,8 +1,10 @@
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit } from './_rateLimit.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
+  if (!await rateLimit(req, res, 'newsletter', 10, 900)) return
 
   const { blockId, subject, body, token } = req.body || {}
   if (!blockId || !subject?.trim() || !body?.trim() || !token) {
