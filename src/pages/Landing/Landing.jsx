@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import Hero from './sections/Hero'
 import Features from './sections/Features'
 import HowItWorks from './sections/HowItWorks'
-import WhyItsFree from './sections/WhyItsFree'
+import Pricing from './sections/Pricing'
 import Testimonials from './sections/Testimonials'
 import FooterCTA from './sections/FooterCTA'
 import './Landing.css'
@@ -18,7 +18,7 @@ function Landing() {
       <Hero />
       <Features />
       <HowItWorks />
-      <WhyItsFree /> {/* <-- Renders the new section here */}
+      <Pricing />
       <Testimonials />
       <FooterCTA />
     </main>

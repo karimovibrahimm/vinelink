@@ -9,55 +9,37 @@ const plans = [
     cta: 'Get started free',
     popular: false,
     features: [
-      'Up to 5 links',
-      'Basic themes',
       'Vinelink subdomain',
+      'Up to 5 links',
+      'Up to 5 blocks',
+      'Basic themes',
       'Basic analytics',
-      'Mobile optimized',
+      '1 newsletter send per month',
     ],
     missing: [
-      'Custom domain',
+      'Unlimited links & blocks',
+      'All premium themes',
       'Advanced analytics',
-      'Remove Vinelink branding',
-      'Priority support',
+      'Unlimited newsletter sends',
     ]
   },
   {
     name: 'Pro',
     price: 4,
     description: 'For creators who are serious about growth.',
-    cta: 'Start Pro free for 7 days',
+    cta: 'Upgrade to Pro',
     popular: true,
     features: [
+      'Vinelink subdomain',
       'Unlimited links',
-      'All premium themes',
-      'Custom domain support',
+      'Unlimited blocks',
+      'All premium themes unlocked',
       'Advanced analytics',
-      'Remove Vinelink branding',
-      'Social media icons',
-      'Email support',
-    ],
-    missing: [
-      'Priority support',
-    ]
-  },
-  {
-    name: 'Business',
-    price: 9,
-    description: 'For brands and teams that need more.',
-    cta: 'Start Business free for 7 days',
-    popular: false,
-    features: [
-      'Everything in Pro',
-      'Multiple team members',
-      'Priority support',
-      'Custom analytics reports',
-      'Early access to new features',
-      'Dedicated account manager',
-      'Custom integrations',
+      'Unlimited newsletter sends',
+      'AI assistant & page audit',
     ],
     missing: []
-  }
+  },
 ]
 
 function Pricing() {
@@ -150,7 +132,7 @@ function Pricing() {
         </div>
 
         <p className="pricing__note">
-          🔒 Secure payments. Cancel anytime. All plans include a 7-day free trial.
+          🔒 Secure payments. Cancel anytime.
         </p>
 
       </div>
