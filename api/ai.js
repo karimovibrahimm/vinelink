@@ -28,8 +28,12 @@ export default async function handler(req, res) {
     )
 
     const data = await response.json()
+
+    if (data?.error) return res.status(500).json({ error: `Gemini: ${data.error.message || JSON.stringify(data.error)}` })
+
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!text) return res.status(500).json({ error: 'No response from AI' })
+    const finishReason = data?.candidates?.[0]?.finishReason
+    if (!text) return res.status(500).json({ error: `No response from AI (finish reason: ${finishReason || 'unknown'})` })
 
     res.json({ text })
   } catch (err) {
