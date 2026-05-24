@@ -14,6 +14,11 @@ export default async function handler(req, res) {
     if (!process.env.POLAR_PRODUCT_ID)   return res.status(500).json({ error: 'POLAR_PRODUCT_ID not set' })
     if (!userId || !email)               return res.status(400).json({ error: 'Missing userId or email' })
 
+    const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}$/
+    if (!UUID_RE.test(userId))                         return res.status(400).json({ error: 'Invalid user ID' })
+    if (!EMAIL_RE.test(email) || email.length > 254)   return res.status(400).json({ error: 'Invalid email' })
+
     const response = await fetch('https://api.polar.sh/v1/checkouts', {
       method: 'POST',
       headers: {

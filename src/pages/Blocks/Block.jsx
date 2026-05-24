@@ -311,13 +311,34 @@ function Blocks() {
     await Promise.all(reordered.map((b, i) => supabase.from('blocks').update({ position: i }).eq('id', b.id)))
   }
 
+  const isValidHttpUrl = (raw) => {
+    try { const u = new URL(raw); return u.protocol === 'http:' || u.protocol === 'https:' }
+    catch { return false }
+  }
+
+  const sanitizeBlockData = (type, data) => {
+    const d = { ...data }
+    // Normalise and validate URL fields
+    for (const key of ['url', 'link']) {
+      if (!d[key]) continue
+      if (!d[key].startsWith('http')) d[key] = 'https://' + d[key]
+      if (!isValidHttpUrl(d[key])) return `Invalid URL in "${key}" field (must be http:// or https://).`
+    }
+    // Cap text fields
+    if (d.title)       d.title       = d.title.trim().slice(0, 100)
+    if (d.heading)     d.heading     = d.heading.trim().slice(0, 100)
+    if (d.caption)     d.caption     = d.caption.trim().slice(0, 200)
+    if (d.subheading)  d.subheading  = d.subheading.trim().slice(0, 200)
+    if (d.button_text) d.button_text = d.button_text.trim().slice(0, 50)
+    if (d.body)        d.body        = d.body.trim().slice(0, 2000)
+    return d
+  }
+
   const handleAdd = async (type, data) => {
     setSaving(true)
     setError('')
-    // auto-prepend https for url fields
-    const cleanData = { ...data }
-    if (cleanData.url && !cleanData.url.startsWith('http')) cleanData.url = 'https://' + cleanData.url
-    if (cleanData.link && !cleanData.link.startsWith('http')) cleanData.link = 'https://' + cleanData.link
+    const cleanData = sanitizeBlockData(type, data)
+    if (typeof cleanData === 'string') { setError(cleanData); setSaving(false); return }
 
     const { error } = await supabase.from('blocks').insert({
       user_id: user.id, type, data: cleanData, position: blocks.length
@@ -332,9 +353,8 @@ function Blocks() {
 
   const handleUpdate = async (type, data) => {
     setSaving(true)
-    const cleanData = { ...data }
-    if (cleanData.url && !cleanData.url.startsWith('http')) cleanData.url = 'https://' + cleanData.url
-    if (cleanData.link && !cleanData.link.startsWith('http')) cleanData.link = 'https://' + cleanData.link
+    const cleanData = sanitizeBlockData(type, data)
+    if (typeof cleanData === 'string') { setError(cleanData); setSaving(false); return }
 
     const { error } = await supabase.from('blocks').update({ data: cleanData }).eq('id', editing.id)
     if (!error) { setEditing(null); await fetchBlocks(user.id); toast.success('Block updated.') }

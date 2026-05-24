@@ -6,6 +6,48 @@ const { createClient } = require('@supabase/supabase-js')
 const app = express()
 app.use(express.json())
 
+app.post('/api/subscribe', async (req, res) => {
+  const { blockId, userId, email } = req.body || {}
+  if (!blockId || !userId || !email) return res.status(400).json({ error: 'Missing fields.' })
+  const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const { data: block } = await supabase.from('blocks').select('id')
+    .eq('id', blockId).eq('user_id', userId).eq('type', 'newsletter').eq('active', true).single()
+  if (!block) return res.status(404).json({ error: 'Newsletter not found.' })
+  const { count } = await supabase.from('newsletter_subscribers')
+    .select('*', { count: 'exact', head: true }).eq('block_id', blockId)
+  if (count >= 10000) return res.status(400).json({ error: 'Not accepting new subscribers.' })
+  const { error } = await supabase.from('newsletter_subscribers')
+    .upsert({ block_id: blockId, user_id: userId, email: email.trim() }, { onConflict: 'block_id,email', ignoreDuplicates: true })
+  if (error) return res.status(500).json({ error: 'Could not subscribe.' })
+  res.json({ ok: true })
+})
+
+app.post('/api/ai', async (req, res) => {
+  const { prompt, temperature = 0.7, maxTokens = 1500 } = req.body || {}
+  if (!prompt) return res.status(400).json({ error: 'Missing prompt' })
+  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'AI not configured' })
+
+  try {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature, maxOutputTokens: maxTokens },
+        }),
+      }
+    )
+    const data = await r.json()
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!text) return res.status(500).json({ error: 'No response from AI' })
+    res.json({ text })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/polar-checkout', async (req, res) => {
   const { userId, email } = req.body || {}
   if (!userId || !email) return res.status(400).json({ error: 'Missing userId or email' })

@@ -34,22 +34,6 @@ const logout = async () => {
   window.location.href = '/'
 }
 
-async function startCheckout(profile) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    const res = await fetch('/api/polar-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id, email: user.email }),
-    })
-    const { url, error } = await res.json()
-    if (error) { alert(error); return }
-    window.location.href = url
-  } catch {
-    alert('Could not start checkout. Please try again.')
-  }
-}
-
 export default function DashboardLayout({ activePage, profile, children }) {
   const [upgrading, setUpgrading] = useState(false)
   const isPro = profile?.plan === 'pro'
@@ -58,13 +42,14 @@ export default function DashboardLayout({ activePage, profile, children }) {
     setUpgrading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const base = import.meta.env.VITE_POLAR_CHECKOUT_URL
-      if (!base) { alert('Checkout URL not configured.'); setUpgrading(false); return }
-      const url = new URL(base)
-      url.searchParams.set('checkout[customer_email]', user.email)
-      url.searchParams.set('checkout[metadata][user_id]', user.id)
-      url.searchParams.set('checkout[success_url]', `${window.location.origin}/dashboard?upgraded=1`)
-      window.location.href = url.toString()
+      const res = await fetch('/api/polar-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      })
+      const { url, error } = await res.json()
+      if (error) { alert(`Could not open checkout: ${error}`); setUpgrading(false); return }
+      window.location.href = url
     } catch (err) {
       alert(`Could not open checkout: ${err.message}`)
       setUpgrading(false)

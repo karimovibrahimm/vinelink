@@ -18,6 +18,10 @@ function ComposePanel({ block, subscriberCount, onClose, onLimitReached, onSent 
       toast.error('Please fill in subject and message.')
       return
     }
+    if (body.trim().length > 10000) {
+      toast.error('Message too long (max 10,000 chars).')
+      return
+    }
     setSending(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -84,6 +88,7 @@ function ComposePanel({ block, subscriberCount, onClose, onLimitReached, onSent 
           value={body}
           onChange={e => setBody(e.target.value)}
           rows={8}
+          maxLength={10000}
         />
       </div>
 

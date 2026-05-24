@@ -10,6 +10,10 @@ export default async function handler(req, res) {
   if (!blockId || !subject?.trim() || !body?.trim() || !token) {
     return res.status(400).json({ error: 'Missing required fields.' })
   }
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_RE.test(blockId))           return res.status(400).json({ error: 'Invalid block ID.' })
+  if (subject.trim().length > 120)      return res.status(400).json({ error: 'Subject too long (max 120 chars).' })
+  if (body.trim().length > 10000)       return res.status(400).json({ error: 'Body too long (max 10,000 chars).' })
   if (!process.env.RESEND_API_KEY) {
     return res.status(500).json({ error: 'RESEND_API_KEY is not configured.' })
   }
@@ -40,6 +44,7 @@ export default async function handler(req, res) {
     .eq('user_id', user.id)
 
   if (!subscribers?.length) return res.status(400).json({ error: 'No subscribers to send to.' })
+  if (subscribers.length > 10000) return res.status(400).json({ error: 'Subscriber list too large. Contact support.' })
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -98,7 +103,12 @@ export default async function handler(req, res) {
       if (error) return res.status(500).json({ error: error.message || JSON.stringify(error) })
       sent += Math.min(BATCH, emails.length - i)
     }
-    await supabase.from('newsletter_sends').insert({ user_id: user.id })
+    // Use service role to bypass RLS — public INSERT policy on newsletter_sends is dropped
+    const adminClient = createClient(
+      process.env.VITE_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+    await adminClient.from('newsletter_sends').insert({ user_id: user.id })
     res.json({ sent })
   } catch (err) {
     res.status(500).json({ error: err.message })

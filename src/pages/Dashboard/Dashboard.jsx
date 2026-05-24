@@ -190,10 +190,13 @@ function Dashboard() {
     if (!newLink.title || !newLink.url) return
     setSaving(true)
     setError('')
-    let url = newLink.url
+    const title = newLink.title.trim().slice(0, 100)
+    let url = newLink.url.trim()
     if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
+    try { const u = new URL(url); if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error() }
+    catch { setError('Please enter a valid URL (must start with http:// or https://).'); setSaving(false); return }
     const { error } = await supabase.from('links').insert({
-      user_id: user.id, title: newLink.title, url, position: links.length
+      user_id: user.id, title, url, position: links.length
     })
     if (error) { setError(error.message); toast.error('Failed to add link.') } else {
       setNewLink({ title: '', url: '' })
@@ -207,9 +210,12 @@ function Dashboard() {
   const handleUpdateLink = async () => {
     if (!editingLink.title || !editingLink.url) return
     setSaving(true)
-    let url = editingLink.url
+    const title = editingLink.title.trim().slice(0, 100)
+    let url = editingLink.url.trim()
     if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
-    const { error } = await supabase.from('links').update({ title: editingLink.title, url }).eq('id', editingLink.id)
+    try { const u = new URL(url); if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error() }
+    catch { setError('Please enter a valid URL (must start with http:// or https://).'); setSaving(false); return }
+    const { error } = await supabase.from('links').update({ title, url }).eq('id', editingLink.id)
     if (!error) { setEditingLink(null); await getLinks(user.id); toast.success('Link updated.') }
     setSaving(false)
   }

@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { getThemeById } from '../../lib/themes'
 import './AiAssistant.css'
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 function ProposedChanges({ applyData, profile, links, onApply, onDismiss }) {
   const currentTheme = getThemeById(profile?.theme)
@@ -125,28 +124,18 @@ RULES:
         .map(m => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.text}`)
         .join('\n')
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `${buildContext()}\n\nConversation:\n${historyText}\n\nRespond to the user's latest message.`
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1500
-            }
-          })
-        }
-      )
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `${buildContext()}\n\nConversation:\n${historyText}\n\nRespond to the user's latest message.`,
+          temperature: 0.7,
+          maxTokens: 1500,
+        }),
+      })
 
-      const data = await response.json()
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-
+      const { text, error: aiError } = await response.json()
+      if (aiError) throw new Error(aiError)
       if (!text) throw new Error('No AI response')
 
       const applyMatch = text.match(/<apply>([\s\S]*?)<\/apply>/)

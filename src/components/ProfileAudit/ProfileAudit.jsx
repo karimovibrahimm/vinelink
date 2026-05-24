@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import './ProfileAudit.css'
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 const TYPE_META = {
   success: { icon: '✓', label: 'Great'       },
@@ -34,38 +33,25 @@ export default function ProfileAudit({ profile, links, blocks, isOpen, onClose }
     }
 
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Audit this Vinelink profile. Be direct and specific, not generic.
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `Audit this Vinelink profile. Be direct and specific, not generic.
 
 Profile: ${JSON.stringify(data)}
 
 Score 0-100 (bio quality, completeness, link quality, blocks usage). Return ONLY valid JSON, no markdown:
 {"score":0-100,"headline":"one sentence","items":[{"type":"success|warning|tip","title":"max 5 words","detail":"max 20 words, specific","action_label":"label or null","action_href":"/dashboard/appearance|/dashboard/blocks|/dashboard|null"}]}
 
-Return exactly 5 items. Keep detail fields short (under 20 words each).`
-              }]
-            }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
-          })
-        }
-      )
+Return exactly 5 items. Keep detail fields short (under 20 words each).`,
+          temperature: 0.3,
+          maxTokens: 2048,
+        }),
+      })
 
-      const json = await res.json()
-
-      if (json.error) {
-        setError(`API error: ${json.error.message}`)
-        setLoading(false)
-        return
-      }
-
-      const text = json.candidates?.[0]?.content?.parts?.[0]?.text
+      const { text, error: aiError } = await res.json()
+      if (aiError) throw new Error(aiError)
       if (!text) {
         setError(`No response from AI. Status: ${res.status}`)
         setLoading(false)

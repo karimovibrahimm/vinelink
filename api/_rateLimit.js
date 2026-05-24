@@ -1,5 +1,7 @@
 export async function rateLimit(req, res, endpoint, max = 5, windowSeconds = 900) {
-  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown'
+  // Use rightmost IP — Vercel appends the real client IP last; leftmost is user-controlled
+  const forwarded = req.headers['x-forwarded-for'] || ''
+  const ip = (req.headers['x-real-ip'] || forwarded.split(',').pop() || '').trim() || 'unknown'
   const key = `${endpoint}:${ip}`
 
   try {

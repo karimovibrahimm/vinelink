@@ -126,8 +126,10 @@ function Appearance() {
       return
     }
     setSaving(true)
+    const full_name = form.full_name.trim().slice(0, 100)
+    const bio       = form.bio.trim().slice(0, 160)
     const { error } = await supabase.from('profiles').update({
-      full_name: form.full_name, bio: form.bio, theme: form.theme
+      full_name, bio, theme: form.theme
     }).eq('id', user.id)
     if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await getProfile(user.id); toast.success('Changes saved!') }
     setSaving(false)

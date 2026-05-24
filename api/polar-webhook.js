@@ -1,3 +1,6 @@
+import crypto from 'crypto'
+import { rateLimit } from './_rateLimit.js'
+
 async function findUserByEmail(email) {
   if (!email) return null
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -23,27 +26,77 @@ async function updatePlan(userId, plan) {
   })
 }
 
+// Standard Webhooks (https://www.standardwebhooks.com/) signature verification.
+// Polar sends webhook-id, webhook-timestamp, webhook-signature headers.
+function verifySignature(webhookId, webhookTimestamp, rawBody, signatureHeader, secret) {
+  const secretBytes = Buffer.from(secret.replace(/^(whsec_|polar_whs_)/, ''), 'base64')
+  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`
+  const computed = crypto.createHmac('sha256', secretBytes).update(signedContent).digest('base64')
+
+  // Header may contain multiple space-separated signatures ("v1,sig1 v1,sig2")
+  return signatureHeader.split(' ').some(token => {
+    const [version, sig] = token.split(',')
+    if (version !== 'v1' || !sig) return false
+    try {
+      return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(computed))
+    } catch { return false }
+  })
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  // Vercel auto-parses JSON bodies — handle both parsed object and raw stream
-  let payload
+  // Rate limit: 200 requests per minute (legitimate Polar traffic is low volume)
+  if (!await rateLimit(req, res, 'webhook', 200, 60)) return
+
+  // ── Read body and collect raw string for signature verification ──────────────
+  let payload, rawBody
   if (req.body && typeof req.body === 'object') {
     payload = req.body
+    // Vercel consumed the stream — re-serialize for signature check (best-effort)
+    rawBody = JSON.stringify(req.body)
   } else {
     try {
-      const raw = await new Promise((resolve, reject) => {
+      rawBody = await new Promise((resolve, reject) => {
         const chunks = []
         req.on('data', c => chunks.push(c))
         req.on('end', () => resolve(Buffer.concat(chunks).toString()))
         req.on('error', reject)
       })
-      payload = JSON.parse(raw)
+      payload = JSON.parse(rawBody)
     } catch {
       return res.status(400).json({ error: 'Invalid payload' })
     }
   }
 
+  // ── Signature verification ────────────────────────────────────────────────────
+  const webhookSecret    = process.env.POLAR_WEBHOOK_SECRET
+  const webhookId        = req.headers['webhook-id']
+  const webhookTimestamp = req.headers['webhook-timestamp']
+  const webhookSig       = req.headers['webhook-signature']
+
+  if (webhookSecret) {
+    if (!webhookId || !webhookTimestamp || !webhookSig) {
+      console.warn('[webhook] missing signature headers — rejecting')
+      return res.status(401).json({ error: 'Missing webhook signature headers' })
+    }
+
+    // Reject events older than 5 minutes (prevents replay attacks)
+    const age = Math.abs(Date.now() / 1000 - parseInt(webhookTimestamp, 10))
+    if (age > 300) {
+      console.warn('[webhook] stale timestamp, rejecting')
+      return res.status(401).json({ error: 'Webhook timestamp too old' })
+    }
+
+    if (!verifySignature(webhookId, webhookTimestamp, rawBody, webhookSig, webhookSecret)) {
+      console.warn('[webhook] invalid signature — rejecting')
+      return res.status(401).json({ error: 'Invalid webhook signature' })
+    }
+  } else {
+    console.warn('[webhook] POLAR_WEBHOOK_SECRET not set — skipping signature check')
+  }
+
+  // ── Process event ─────────────────────────────────────────────────────────────
   const { type, data } = payload || {}
   console.log('[webhook] event:', type, '| email:', data?.customer?.email, '| meta_user_id:', data?.metadata?.user_id)
 

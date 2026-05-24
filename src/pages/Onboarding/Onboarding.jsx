@@ -4,7 +4,6 @@ import { getThemeById } from '../../lib/themes'
 import usePageMeta from '../../lib/usePageMeta'
 import './Onboarding.css'
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 const LOADING_STEPS = [
   'Reading your content...',
@@ -156,19 +155,19 @@ function Onboarding({ user, profile, onComplete }) {
 
   const handleGenerate = async () => {
     if (!socialInput.trim()) return
+    if (socialInput.trim().length > 2000) {
+      setError('Please keep your description under 2000 characters.')
+      return
+    }
     setLoading(true)
     setError('')
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are helping a creator set up their link-in-bio page on Vinelink. Based on this info: "${socialInput}"
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `You are helping a creator set up their link-in-bio page on Vinelink. Based on this info: "${socialInput}"
 
 Generate exactly 3 DISTINCT profile variants. Each must feel completely different — different vibe, tone, theme, and bio style. Be specific to their niche, not generic.
 
@@ -203,17 +202,15 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
       ]
     }
   ]
-}`
-              }]
-            }],
-            generationConfig: { temperature: 0.9, maxOutputTokens: 1500 }
-          })
-        }
-      )
+}`,
+          temperature: 0.9,
+          maxTokens: 1500,
+        }),
+      })
 
-      const data = await response.json()
-      const text = data.candidates[0].content.parts[0].text
-      const clean = text.replace(/```json|```/g, '').trim()
+      const { text, error: aiError } = await response.json()
+      if (aiError) throw new Error(aiError)
+      const clean = (text || '').replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
       setVariants(parsed.variants)
       setSelectedIndex(0)
@@ -398,6 +395,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks, no extra text):
               value={socialInput}
               onChange={(e) => setSocialInput(e.target.value)}
               rows={6}
+              maxLength={2000}
             />
 
             {error && <div className="onboarding__error">{error}</div>}

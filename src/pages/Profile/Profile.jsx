@@ -6,7 +6,13 @@ import './Profile.css'
 
 // ─── Newsletter subscriber helper ────────────────────────────────────────────
 async function subscribeEmail(blockId, userId, email) {
-  return supabase.from('newsletter_subscribers').insert({ block_id: blockId, user_id: userId, email })
+  const res = await fetch('/api/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ blockId, userId, email }),
+  })
+  const json = await res.json()
+  return { error: res.ok ? null : (json.error || 'Subscribe failed') }
 }
 
 // ─── Video embed URL parser ───────────────────────────────────────────────────
@@ -110,9 +116,11 @@ function BlockNewsletter({ block, userId, theme }) {
   const [status, setStatus] = useState('idle')
 
   const handleSubmit = async () => {
-    if (!email || !email.includes('@')) return
+    const trimmed = email.trim()
+    const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}$/
+    if (!trimmed || !EMAIL_RE.test(trimmed) || trimmed.length > 254) return
     setStatus('loading')
-    const { error } = await subscribeEmail(block.id, userId, email)
+    const { error } = await subscribeEmail(block.id, userId, trimmed)
     setStatus(error ? 'error' : 'success')
   }
 
