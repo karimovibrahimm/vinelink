@@ -13,6 +13,7 @@ import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import { getProfileUrl } from '../../lib/url'
 import usePageMeta from '../../lib/usePageMeta'
 import { useToast } from '../../lib/ToastContext'
+import { useAuth } from '../../lib/AuthContext'
 
 // ─── Block type config ────────────────────────────────────────────────────────
 const BLOCK_TYPES = [
@@ -262,8 +263,7 @@ function BlockForm({ initial, onSave, onCancel, saving }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 function Blocks() {
-  const [user, setUser]         = useState(null)
-  const [profile, setProfile]   = useState(null)
+  const { user, profile, authLoading } = useAuth()
   const [blocks, setBlocks]     = useState([])
   usePageMeta('Creator Blocks | Vinelink', 'Add text, images, videos, music and more to your Vinelink page.')
   const toast = useToast()
@@ -282,19 +282,13 @@ function Blocks() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  useEffect(() => { init() }, [])
+  useEffect(() => {
+    if (user) init()
+  }, [user])
 
   const init = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
-    setUser(user)
-    await Promise.all([fetchProfile(user.id), fetchBlocks(user.id)])
+    await fetchBlocks(user.id)
     setLoading(false)
-  }
-
-  const fetchProfile = async (uid) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
-    if (data) setProfile(data)
   }
 
   const fetchBlocks = async (uid) => {
@@ -373,7 +367,7 @@ function Blocks() {
     toast.success(active ? 'Block hidden.' : 'Block visible.')
   }
 
-  if (loading) return (
+  if (authLoading || loading) return (
     <DashboardLayout activePage="blocks" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">

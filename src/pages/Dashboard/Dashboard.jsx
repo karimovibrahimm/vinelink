@@ -10,6 +10,7 @@ import ProfileAudit from '../../components/ProfileAudit/ProfileAudit'
 import QRModal from '../../components/QRModal/QRModal'
 import { getProfileUrl, getProfileDisplayUrl } from '../../lib/url'
 import usePageMeta from '../../lib/usePageMeta'
+import { useAuth } from '../../lib/AuthContext'
 import {
   DndContext,
   closestCenter,
@@ -111,8 +112,7 @@ function SortableLink({ link, onEdit, onDelete, onToggle }) {
 }
 
 function Dashboard() {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const { user, profile, authLoading, refreshProfile } = useAuth()
   const [links, setLinks] = useState([])
   const [blocks, setBlocks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -137,7 +137,9 @@ function Dashboard() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  useEffect(() => { getUser() }, [])
+  useEffect(() => {
+    if (user) init()
+  }, [user])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -147,21 +149,9 @@ function Dashboard() {
     }
   }, [])
 
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
-    setUser(user)
-    const { data: prof } = await supabase.from('profiles').select('onboarding_done').eq('id', user.id).single()
-    if (prof && !prof.onboarding_done) { window.location.href = '/onboarding'; return }
-    await getProfile(user.id)
-    await getLinks(user.id)
-    await getBlocks(user.id)
+  const init = async () => {
+    await Promise.all([getLinks(user.id), getBlocks(user.id)])
     setLoading(false)
-  }
-
-  const getProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    if (data) setProfile(data)
   }
 
   const getLinks = async (userId) => {
@@ -243,7 +233,7 @@ function Dashboard() {
         if (!t?.pro || profile?.plan === 'pro') updates.theme = applyData.theme
       }
       await supabase.from('profiles').update(updates).eq('id', user.id)
-      await getProfile(user.id)
+      await refreshProfile()
     }
     if (applyData.links?.length > 0) {
       await Promise.all(applyData.links.map(l =>
@@ -253,7 +243,7 @@ function Dashboard() {
     }
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <DashboardLayout activePage="links" profile={profile}>
         <main className="dashboard__main">

@@ -8,6 +8,7 @@ import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import usePageMeta from '../../lib/usePageMeta'
 import { useToast } from '../../lib/ToastContext'
+import { useAuth } from '../../lib/AuthContext'
 
 function ThemeMiniPreview({ theme: t }) {
   const getBg = () => {
@@ -53,8 +54,7 @@ function ThemeMiniPreview({ theme: t }) {
 }
 
 function Appearance() {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const { user, profile, authLoading, refreshProfile } = useAuth()
   const [links, setLinks] = useState([])
   const [blocks, setBlocks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -71,24 +71,20 @@ function Appearance() {
   const fileInputRef = useRef(null)
   const toast = useToast()
 
-  useEffect(() => { getUser() }, [])
+  useEffect(() => {
+    if (profile) {
+      setAvatarUrl(profile.avatar_url || null)
+      setForm({ full_name: profile.full_name || '', bio: profile.bio || '', theme: profile.theme || 'forest' })
+    }
+  }, [profile])
 
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
-    setUser(user)
-    await getProfile(user.id)
+  useEffect(() => {
+    if (user) init()
+  }, [user])
+
+  const init = async () => {
     await Promise.all([getLinks(user.id), getBlocks(user.id)])
     setLoading(false)
-  }
-
-  const getProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    if (data) {
-      setProfile(data)
-      setAvatarUrl(data.avatar_url || null)
-      setForm({ full_name: data.full_name || '', bio: data.bio || '', theme: data.theme || 'forest' })
-    }
   }
 
   const getLinks = async (userId) => {
@@ -115,7 +111,7 @@ function Appearance() {
     if (uploadError) { toast.error('Upload failed: ' + uploadError.message); setUploadingAvatar(false); return }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath)
     const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
-    if (!updateError) { setAvatarUrl(publicUrl); toast.success('Photo updated!') }
+    if (!updateError) { setAvatarUrl(publicUrl); await refreshProfile(); toast.success('Photo updated!') }
     setUploadingAvatar(false)
   }
 
@@ -131,7 +127,7 @@ function Appearance() {
     const { error } = await supabase.from('profiles').update({
       full_name, bio, theme: form.theme
     }).eq('id', user.id)
-    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await getProfile(user.id); toast.success('Changes saved!') }
+    if (!error) { setSaved(true); setTimeout(() => setSaved(false), 2000); await refreshProfile(); toast.success('Changes saved!') }
     setSaving(false)
   }
 
@@ -143,7 +139,7 @@ function Appearance() {
   const activeTheme = themes.find(t => t.id === form.theme) || themes[0]
   const displayAvatar = avatarPreview || avatarUrl
 
-  if (loading) return (
+  if (authLoading || loading) return (
     <DashboardLayout activePage="appearance" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">

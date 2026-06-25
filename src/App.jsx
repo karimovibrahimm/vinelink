@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import Navbar from './components/Navbar/Navbar'
 import Landing from './pages/Landing/Landing'
 import Signup from './pages/Auth/Signup'
@@ -17,6 +17,7 @@ import Subscribers from './pages/Subscribers/Subscribers'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import { ToastProvider } from './lib/ToastContext'
+import { AuthProvider } from './lib/AuthContext'
 import './App.css'
 
 function OnboardingWrapper() {
@@ -87,12 +88,14 @@ function App() {
           <Route path="/reset-password"      element={<ResetPassword />} />
           <Route path="/auth/callback"       element={<AuthCallback />} />
           <Route path="/onboarding"          element={<OnboardingWrapper />} />
-          <Route path="/dashboard"           element={<Dashboard />} />
-          <Route path="/dashboard/appearance" element={<Appearance />} />
-          <Route path="/dashboard/analytics" element={<Analytics />} />
-          <Route path="/dashboard/settings"  element={<Settings />} />
-          <Route path="/dashboard/blocks"    element={<Blocks />} />
-          <Route path="/dashboard/subscribers" element={<Subscribers />} />
+          <Route path="/dashboard" element={<AuthProvider><Outlet /></AuthProvider>}>
+            <Route index             element={<Dashboard />} />
+            <Route path="appearance" element={<Appearance />} />
+            <Route path="analytics"  element={<Analytics />} />
+            <Route path="settings"   element={<Settings />} />
+            <Route path="blocks"     element={<Blocks />} />
+            <Route path="subscribers" element={<Subscribers />} />
+          </Route>
           <Route path="/:username"           element={<Profile />} />
         </Routes>
       </div>

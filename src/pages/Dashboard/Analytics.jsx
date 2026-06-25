@@ -3,11 +3,11 @@ import { supabase } from '../../lib/supabase'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import usePageMeta from '../../lib/usePageMeta'
+import { useAuth } from '../../lib/AuthContext'
 import './Analytics.css'
 
 function Analytics() {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const { user, profile, authLoading } = useAuth()
   const [links, setLinks] = useState([])
   const [clicks, setClicks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,23 +17,17 @@ function Analytics() {
   const [transitioning, setTransitioning] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
-  useEffect(() => { getUser() }, [])
+  useEffect(() => {
+    if (user) init()
+  }, [user])
 
   useEffect(() => {
     if (user) fetchClicks(user.id, period)
   }, [period, user])
 
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
-    setUser(user)
-    await Promise.all([getProfile(user.id), getLinks(user.id), fetchClicks(user.id, 7)])
+  const init = async () => {
+    await Promise.all([getLinks(user.id), fetchClicks(user.id, 7)])
     setLoading(false)
-  }
-
-  const getProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    if (data) setProfile(data)
   }
 
   const getLinks = async (userId) => {
@@ -79,7 +73,7 @@ function Analytics() {
   const maxVal = Math.max(...chartData.map(d => d.count), 1)
   const totalClicks = clicks.length
 
-  if (loading) return (
+  if (authLoading || loading) return (
     <DashboardLayout activePage="analytics" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">

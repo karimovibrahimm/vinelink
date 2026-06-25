@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import UpgradeModal from '../../components/UpgradeModal/UpgradeModal'
 import usePageMeta from '../../lib/usePageMeta'
 import { useToast } from '../../lib/ToastContext'
+import { useAuth } from '../../lib/AuthContext'
 
 function ComposePanel({ block, subscriberCount, onClose, onLimitReached, onSent }) {
   const [subject, setSubject] = useState('')
@@ -115,8 +116,7 @@ function ComposePanel({ block, subscriberCount, onClose, onLimitReached, onSent 
 }
 
 function Subscribers() {
-  const [user, setUser]         = useState(null)
-  const [profile, setProfile]   = useState(null)
+  const { user, profile, authLoading } = useAuth()
   usePageMeta('Subscribers | Vinelink', 'View and manage your newsletter subscribers on Vinelink.')
   const toast = useToast()
 
@@ -126,14 +126,11 @@ function Subscribers() {
   const [sendsThisMonth, setSendsThisMonth] = useState(0)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
-  useEffect(() => { init() }, [])
+  useEffect(() => {
+    if (user) init()
+  }, [user])
 
   const init = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
-    setUser(user)
-    const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    if (prof) setProfile(prof)
     await Promise.all([fetchData(user.id), fetchSendsThisMonth(user.id)])
     setLoading(false)
   }
@@ -195,7 +192,7 @@ function Subscribers() {
 
   const totalSubs = groups.reduce((acc, g) => acc + g.subscribers.length, 0)
 
-  if (loading) return (
+  if (authLoading || loading) return (
     <DashboardLayout activePage="subscribers" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">

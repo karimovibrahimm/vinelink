@@ -3,12 +3,11 @@ import { supabase } from '../../lib/supabase'
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout'
 import usePageMeta from '../../lib/usePageMeta'
 import { useToast } from '../../lib/ToastContext'
+import { useAuth } from '../../lib/AuthContext'
 import './Settings.css'
 
 function Settings() {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { user, profile, authLoading } = useAuth()
   usePageMeta('Settings | Vinelink', 'Manage your Vinelink account settings, email, and password.')
 
   const toast = useToast()
@@ -21,21 +20,9 @@ function Settings() {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [form, setForm] = useState({ email: '', newPassword: '', confirmPassword: '' })
 
-  useEffect(() => { getUser() }, [])
-
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
-    setUser(user)
-    setForm(f => ({ ...f, email: user.email }))
-    await getProfile(user.id)
-    setLoading(false)
-  }
-
-  const getProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    if (data) setProfile(data)
-  }
+  useEffect(() => {
+    if (user) setForm(f => ({ ...f, email: user.email }))
+  }, [user])
 
   const handleUpdateEmail = async () => {
     setSaving(true)
@@ -113,7 +100,7 @@ function Settings() {
   }
 
 
-  if (loading) return (
+  if (authLoading) return (
     <DashboardLayout activePage="settings" profile={null}>
       <main className="dashboard__main">
         <div className="dashboard__header">
