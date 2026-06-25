@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { getThemeById } from '../../lib/themes'
+import { getLinkIcon } from '../../lib/linkIcons'
 import './Profile.css'
 
 // ─── Newsletter subscriber helper ────────────────────────────────────────────
@@ -51,6 +52,7 @@ function BlockLink({ block, theme, textColor }) {
       target="_blank"
       rel="noreferrer noopener"
     >
+      {getLinkIcon(block.data.url) && <span className="profile__link-icon">{getLinkIcon(block.data.url)}</span>}
       <span className="profile__link-title">{block.data.title || 'Link'}</span>
       <svg className="profile__link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -332,6 +334,7 @@ function Profile({ customUsername }) {
                 rel="noreferrer noopener"
                 onClick={() => trackLinkClick(link.id)}
               >
+                {getLinkIcon(link.url) && <span className="profile__link-icon">{getLinkIcon(link.url)}</span>}
                 <span className="profile__link-title">{link.title}</span>
                 <svg className="profile__link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
