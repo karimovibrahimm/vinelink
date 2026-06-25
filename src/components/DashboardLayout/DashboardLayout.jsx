@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import '../../pages/Dashboard/Dashboard.css'
 
@@ -71,14 +72,14 @@ export default function DashboardLayout({ activePage, profile, children }) {
         </a>
         <nav className="dashboard__nav">
           {NAV_ITEMS.map(item => (
-            <a
+            <Link
               key={item.id}
-              href={item.href}
+              to={item.href}
               className={`dashboard__nav-item${activePage === item.id ? ' dashboard__nav-item--active' : ''}`}
             >
               {item.icon(18)}
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="dashboard__sidebar-bottom">
@@ -118,14 +119,14 @@ export default function DashboardLayout({ activePage, profile, children }) {
 
       <nav className="dashboard__mobile-nav">
         {NAV_ITEMS.map(item => (
-          <a
+          <Link
             key={item.id}
-            href={item.href}
+            to={item.href}
             className={`dashboard__mobile-nav-item${activePage === item.id ? ' dashboard__mobile-nav-item--active' : ''}`}
           >
             {item.icon(20)}
             <span>{item.mobileLabel}</span>
-          </a>
+          </Link>
         ))}
       </nav>
 
