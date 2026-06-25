@@ -163,9 +163,13 @@ function Onboarding({ user, profile, onComplete }) {
     setError('')
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const response = await fetch('/api/ai', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           prompt: `You are helping a creator set up their link-in-bio page on Vinelink. Based on this info: "${socialInput}"
 

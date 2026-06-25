@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
 import './ProfileAudit.css'
 
 
@@ -33,9 +34,13 @@ export default function ProfileAudit({ profile, links, blocks, isOpen, onClose }
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/ai', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           prompt: `Audit this Vinelink profile. Be direct and specific, not generic.
 

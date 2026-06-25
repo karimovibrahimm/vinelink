@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { getThemeById } from '../../lib/themes'
+import { supabase } from '../../lib/supabase'
 import './AiAssistant.css'
 
 
@@ -124,9 +125,13 @@ RULES:
         .map(m => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.text}`)
         .join('\n')
 
+      const { data: { session } } = await supabase.auth.getSession()
       const response = await fetch('/api/ai', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           prompt: `${buildContext()}\n\nConversation:\n${historyText}\n\nRespond to the user's latest message.`,
           temperature: 0.7,

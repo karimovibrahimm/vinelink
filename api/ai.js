@@ -1,8 +1,21 @@
+import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from './_rateLimit.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
   if (!await rateLimit(req, res, 'ai', 20, 900)) return
+
+  // Require a valid Supabase session — this is not a public LLM proxy.
+  const token = (req.headers.authorization || '').replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+
+  const supabase = createClient(
+    process.env.VITE_SUPABASE_URL,
+    process.env.VITE_SUPABASE_ANON_KEY,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' })
 
   const { prompt, temperature = 0.7, maxTokens = 1500 } = req.body || {}
   if (!prompt) return res.status(400).json({ error: 'Missing prompt' })
