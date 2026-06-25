@@ -263,12 +263,10 @@ function BlockForm({ initial, onSave, onCancel, saving }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 function Blocks() {
-  const { user, profile, authLoading } = useAuth()
-  const [blocks, setBlocks]     = useState([])
+  const { user, profile, authLoading, blocks, setBlocks, refreshBlocks } = useAuth()
   usePageMeta('Creator Blocks | Vinelink', 'Add text, images, videos, music and more to your Vinelink page.')
   const toast = useToast()
 
-  const [loading, setLoading]   = useState(true)
   const [adding, setAdding]     = useState(false)
   const [editing, setEditing]   = useState(null)
   const [saving, setSaving]     = useState(false)
@@ -283,18 +281,11 @@ function Blocks() {
   )
 
   useEffect(() => {
-    if (user) init()
+    if (!user) return
+    if (blocks === null) refreshBlocks()
   }, [user])
 
-  const init = async () => {
-    await fetchBlocks(user.id)
-    setLoading(false)
-  }
-
-  const fetchBlocks = async (uid) => {
-    const { data } = await supabase.from('blocks').select('*').eq('user_id', uid).order('position', { ascending: true })
-    if (data) setBlocks(data)
-  }
+  const dataLoading = blocks === null
 
   const handleDragEnd = async ({ active, over }) => {
     if (!over || active.id === over.id) return
@@ -339,7 +330,7 @@ function Blocks() {
     })
     if (error) { setError(error.message); toast.error('Failed to add block.') } else {
       setAdding(false)
-      await fetchBlocks(user.id)
+      await refreshBlocks()
       toast.success('Block added!')
     }
     setSaving(false)
@@ -351,23 +342,23 @@ function Blocks() {
     if (typeof cleanData === 'string') { setError(cleanData); setSaving(false); return }
 
     const { error } = await supabase.from('blocks').update({ data: cleanData }).eq('id', editing.id)
-    if (!error) { setEditing(null); await fetchBlocks(user.id); toast.success('Block updated.') }
+    if (!error) { setEditing(null); await refreshBlocks(); toast.success('Block updated.') }
     setSaving(false)
   }
 
   const handleDelete = async (id) => {
     await supabase.from('blocks').delete().eq('id', id)
-    await fetchBlocks(user.id)
+    await refreshBlocks()
     toast.success('Block deleted.')
   }
 
   const handleToggle = async (id, active) => {
     await supabase.from('blocks').update({ active: !active }).eq('id', id)
-    await fetchBlocks(user.id)
+    await refreshBlocks()
     toast.success(active ? 'Block hidden.' : 'Block visible.')
   }
 
-  if (authLoading || loading) return (
+  if (authLoading || dataLoading) return (
     <DashboardLayout activePage="blocks" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">

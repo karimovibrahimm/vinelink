@@ -54,10 +54,7 @@ function ThemeMiniPreview({ theme: t }) {
 }
 
 function Appearance() {
-  const { user, profile, authLoading, refreshProfile } = useAuth()
-  const [links, setLinks] = useState([])
-  const [blocks, setBlocks] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { user, profile, authLoading, refreshProfile, links, refreshLinks, blocks, refreshBlocks } = useAuth()
   usePageMeta('Appearance | Vinelink', 'Customize your Vinelink page theme, bio, and profile photo.')
 
   const [saving, setSaving] = useState(false)
@@ -79,23 +76,14 @@ function Appearance() {
   }, [profile])
 
   useEffect(() => {
-    if (user) init()
+    if (!user) return
+    if (links === null) refreshLinks()
+    if (blocks === null) refreshBlocks()
   }, [user])
 
-  const init = async () => {
-    await Promise.all([getLinks(user.id), getBlocks(user.id)])
-    setLoading(false)
-  }
-
-  const getLinks = async (userId) => {
-    const { data } = await supabase.from('links').select('*').eq('user_id', userId).eq('active', true).order('position', { ascending: true })
-    if (data) setLinks(data)
-  }
-
-  const getBlocks = async (userId) => {
-    const { data } = await supabase.from('blocks').select('*').eq('user_id', userId).eq('active', true).order('position', { ascending: true })
-    if (data) setBlocks(data)
-  }
+  const dataLoading = links === null || blocks === null
+  const activeLinks  = (links || []).filter(l => l.active)
+  const activeBlocks = (blocks || []).filter(b => b.active)
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0]
@@ -139,7 +127,7 @@ function Appearance() {
   const activeTheme = themes.find(t => t.id === form.theme) || themes[0]
   const displayAvatar = avatarPreview || avatarUrl
 
-  if (authLoading || loading) return (
+  if (authLoading || dataLoading) return (
     <DashboardLayout activePage="appearance" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">
@@ -257,8 +245,8 @@ function Appearance() {
 
       <PhonePreview
         profile={{ ...profile, full_name: form.full_name, bio: form.bio, avatar_url: avatarPreview || avatarUrl }}
-        links={links}
-        blocks={blocks}
+        links={activeLinks}
+        blocks={activeBlocks}
         themeObj={activeTheme}
       />
 
@@ -268,8 +256,8 @@ function Appearance() {
             <button className="mobile-preview__close" onClick={() => setMobilePreview(false)}>✕ Close</button>
             <PhonePreview
               profile={{ ...profile, full_name: form.full_name, bio: form.bio, avatar_url: avatarPreview || avatarUrl }}
-              links={links}
-              blocks={blocks}
+              links={activeLinks}
+              blocks={activeBlocks}
               themeObj={activeTheme}
             />
           </div>

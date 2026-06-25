@@ -7,8 +7,7 @@ import { useAuth } from '../../lib/AuthContext'
 import './Analytics.css'
 
 function Analytics() {
-  const { user, profile, authLoading } = useAuth()
-  const [links, setLinks] = useState([])
+  const { user, profile, authLoading, links, refreshLinks } = useAuth()
   const [clicks, setClicks] = useState([])
   const [loading, setLoading] = useState(true)
   usePageMeta('Analytics | Vinelink', 'Track link clicks and page performance on your Vinelink dashboard.')
@@ -18,22 +17,13 @@ function Analytics() {
   const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   useEffect(() => {
-    if (user) init()
+    if (!user) return
+    if (links === null) refreshLinks()
   }, [user])
 
   useEffect(() => {
-    if (user) fetchClicks(user.id, period)
+    if (user) fetchClicks(user.id, period).then(() => setLoading(false))
   }, [period, user])
-
-  const init = async () => {
-    await Promise.all([getLinks(user.id), fetchClicks(user.id, 7)])
-    setLoading(false)
-  }
-
-  const getLinks = async (userId) => {
-    const { data } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
-    if (data) setLinks(data)
-  }
 
   const fetchClicks = async (userId, p) => {
     const from = new Date()
@@ -64,7 +54,7 @@ function Analytics() {
   }, [clicks, period])
 
   const linkStats = useMemo(() =>
-    links.map(link => ({
+    (links || []).map(link => ({
       ...link,
       clicks: clicks.filter(c => c.link_id === link.id).length
     })).sort((a, b) => b.clicks - a.clicks)
@@ -73,7 +63,7 @@ function Analytics() {
   const maxVal = Math.max(...chartData.map(d => d.count), 1)
   const totalClicks = clicks.length
 
-  if (authLoading || loading) return (
+  if (authLoading || links === null || loading) return (
     <DashboardLayout activePage="analytics" profile={profile}>
       <main className="dashboard__main">
         <div className="dashboard__header">

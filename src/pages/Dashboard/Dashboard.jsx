@@ -112,10 +112,7 @@ function SortableLink({ link, onEdit, onDelete, onToggle }) {
 }
 
 function Dashboard() {
-  const { user, profile, authLoading, refreshProfile } = useAuth()
-  const [links, setLinks] = useState([])
-  const [blocks, setBlocks] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { user, profile, authLoading, refreshProfile, links, setLinks, refreshLinks, blocks, refreshBlocks } = useAuth()
   const [addingLink, setAddingLink] = useState(false)
   const [editingLink, setEditingLink] = useState(null)
   const [newLink, setNewLink] = useState({ title: '', url: '' })
@@ -138,7 +135,9 @@ function Dashboard() {
   )
 
   useEffect(() => {
-    if (user) init()
+    if (!user) return
+    if (links === null) refreshLinks()
+    if (blocks === null) refreshBlocks()
   }, [user])
 
   useEffect(() => {
@@ -149,20 +148,7 @@ function Dashboard() {
     }
   }, [])
 
-  const init = async () => {
-    await Promise.all([getLinks(user.id), getBlocks(user.id)])
-    setLoading(false)
-  }
-
-  const getLinks = async (userId) => {
-    const { data } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
-    if (data) setLinks(data)
-  }
-
-  const getBlocks = async (userId) => {
-    const { data } = await supabase.from('blocks').select('*').eq('user_id', userId).order('position', { ascending: true })
-    if (data) setBlocks(data)
-  }
+  const dataLoading = links === null || blocks === null
 
   const handleDragEnd = async (event) => {
     const { active, over } = event
@@ -191,7 +177,7 @@ function Dashboard() {
     if (error) { setError(error.message); toast.error('Failed to add link.') } else {
       setNewLink({ title: '', url: '' })
       setAddingLink(false)
-      await getLinks(user.id)
+      await refreshLinks()
       toast.success('Link added!')
     }
     setSaving(false)
@@ -206,19 +192,19 @@ function Dashboard() {
     try { const u = new URL(url); if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error() }
     catch { setError('Please enter a valid URL (must start with http:// or https://).'); setSaving(false); return }
     const { error } = await supabase.from('links').update({ title, url }).eq('id', editingLink.id)
-    if (!error) { setEditingLink(null); await getLinks(user.id); toast.success('Link updated.') }
+    if (!error) { setEditingLink(null); await refreshLinks(); toast.success('Link updated.') }
     setSaving(false)
   }
 
   const handleDeleteLink = async (id) => {
     await supabase.from('links').delete().eq('id', id)
-    await getLinks(user.id)
+    await refreshLinks()
     toast.success('Link deleted.')
   }
 
   const handleToggleLink = async (id, active) => {
     await supabase.from('links').update({ active: !active }).eq('id', id)
-    await getLinks(user.id)
+    await refreshLinks()
     toast.success(active ? 'Link hidden.' : 'Link visible.')
   }
 
@@ -239,11 +225,11 @@ function Dashboard() {
       await Promise.all(applyData.links.map(l =>
         supabase.from('links').update({ title: l.title }).eq('id', l.id)
       ))
-      await getLinks(user.id)
+      await refreshLinks()
     }
   }
 
-  if (authLoading || loading) {
+  if (authLoading || dataLoading) {
     return (
       <DashboardLayout activePage="links" profile={profile}>
         <main className="dashboard__main">

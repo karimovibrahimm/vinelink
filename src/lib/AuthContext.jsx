@@ -11,9 +11,26 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
 
+  // null = not fetched yet (so pages know to fetch), array = cached and shared
+  // across every dashboard page for the rest of the session.
+  const [links, setLinks] = useState(null)
+  const [blocks, setBlocks] = useState(null)
+
   const refreshProfile = useCallback(async (userId) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
     if (data) setProfile(data)
+    return data
+  }, [])
+
+  const refreshLinks = useCallback(async (userId) => {
+    const { data } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
+    if (data) setLinks(data)
+    return data
+  }, [])
+
+  const refreshBlocks = useCallback(async (userId) => {
+    const { data } = await supabase.from('blocks').select('*').eq('user_id', userId).order('position', { ascending: true })
+    if (data) setBlocks(data)
     return data
   }, [])
 
@@ -39,6 +56,12 @@ export function AuthProvider({ children }) {
     authLoading,
     setProfile,
     refreshProfile: () => user && refreshProfile(user.id),
+    links,
+    setLinks,
+    refreshLinks: () => user && refreshLinks(user.id),
+    blocks,
+    setBlocks,
+    refreshBlocks: () => user && refreshBlocks(user.id),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
